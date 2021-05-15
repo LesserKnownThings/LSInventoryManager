@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+[CreateAssetMenu(fileName ="DynamicClass", menuName = "Lesser/Dynamic")]
+public class DynamicData
+{
+	>:FOREVERY items:<
+	protected class >:structName:<
+	{
+		>:STRUCT variables:<
+		protected [0] Name = [1];
+		>:ENDSTRUCT:<
+	}
+	protected >:structName varName:<;
+	>:ENDFOREVERY:<
+}
