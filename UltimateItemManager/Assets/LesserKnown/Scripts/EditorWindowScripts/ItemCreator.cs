@@ -14,15 +14,15 @@ public static class ItemCreator
 
 
 
-    public static List<ItemCreatorWindow.Items> GetData()
+    public static List<ItemCreatorWindow.CustomItem> GetData()
     {
-        List<ItemCreatorWindow.Items> items = FileManager.GetData<List<ItemCreatorWindow.Items>>(folderPath, informationFilePath);
+        List<ItemCreatorWindow.CustomItem> items = FileManager.GetData<List<ItemCreatorWindow.CustomItem>>(folderPath, informationFilePath);
 
 
         if (items == null || items.Count == 0)
-            return new List<ItemCreatorWindow.Items>();
+            return new List<ItemCreatorWindow.CustomItem>();
 
-        List <ItemCreatorWindow.Items> cloneItems = items;     
+        List <ItemCreatorWindow.CustomItem> cloneItems = items;     
 
 
         foreach (var item in items)
@@ -41,7 +41,7 @@ public static class ItemCreator
   
     public static void SaveData()
     {
-        //FileManager.RegisterDataToFile(folderPath, informationFilePath, ItemCreatorWindow.items);
+        FileManager.RegisterDataToFile(folderPath, informationFilePath, ItemCreatorWindow.items);
         GenerateAssetData();
     }
     
@@ -96,7 +96,7 @@ public static class ItemCreator
 public class ItemsAssets:ScriptableObject
 {
     [HideInInspector]
-    public List<ItemCreatorWindow.Items> itemsData;
+    public List<ItemCreatorWindow.CustomItem> itemsData;
 }
 
 

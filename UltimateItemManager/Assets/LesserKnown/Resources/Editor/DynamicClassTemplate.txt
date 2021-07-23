@@ -4,14 +4,41 @@ using UnityEngine;
 
 [CreateAssetMenu(fileName ="DynamicClass", menuName = "Lesser/Dynamic")]
 public class DynamicData
-{
-	>:FOREVERY items:<
-	protected class >:structName:<
+{	
+	private static DynamicData instance;
+	public static DynamicData Instance
 	{
-		>:STRUCT variables:<
-		protected [0] Name = [1];
-		>:ENDSTRUCT:<
+		get
+		{
+			if(instance == null)
+			{
+				instance = new DynamicData();
+			}
+			return instance;
+			}
+	}	
+	public class ItemsClass
+	{
+		>:FOREVERY:<
+		public [0] Name;
+		>:ENDFOREVERY:<	
+		
+		public ItemsClass
+		(
+		>:FOREVERY Param:<
+		[0] Name
+		>:ENDFOREVERY Param:<	
+		) 
+		{
+		>:FOREVERY Assign:<
+		this.Name = Name;
+		>:ENDFOREVERY Assign:<	
+		}
 	}
-	protected >:structName varName:<;
-	>:ENDFOREVERY:<
+	>:FOREVERY Class:<
+	public ItemsClass >:className:< = new ItemsClass
+	(
+	>:FILL_PARAM:<
+	);
+	>:ENDFOREVERY Class:<	
 }

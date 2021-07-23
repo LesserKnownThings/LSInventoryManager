@@ -5,21 +5,34 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using System.Globalization;
+using System.Reflection;
 
 public class TemplateSystem
 {
     const string FOREVERY_LOOP = "FOREVERY";
     const string FOREVERY_LOOP_END = "ENDFOREVERY";
-    const string STRUCT_LOOP = "STRUCT";
-    const string STURCT_LOOP_END = "ENDSTRUCT";
+
+    const string FOREVERY_PARAM_LOOP = "FOREVERY Param";
+    const string FOREVERY_PARAM_LOOP_END = "ENDFOREVERY Param";
+
+    const string FOREVERY_ASSIGN_LOOP = "FOREVERY Assign";
+    const string FOREVERY_ASSIGN_LOOP_END = "ENDFOREVERY Assign";
+
+    const string FOREVERY_CLASS_LOOP = "FOREVERY Class";
+    const string FOREVERY_CLASS_LOOP_END = "ENDFOREVERY Class";
+
+    const string FILL = ">:FILL_PARAM:<";
+
+    const string NONE = "";
 
     private string templateHolder;
 
-  
+   
 
 
     private List<TemplateItemData> itemsData = new List<TemplateItemData>();
-    private bool inLoop;
+    Dictionary<string, object> totalVariables = new Dictionary<string, object>();
+    
 
     public TemplateSystem(string template)
     {
@@ -33,126 +46,254 @@ public class TemplateSystem
 
     public string ParseData()
     {
+        SetTotalVariables();
+
         List<string> lines = new List<string>(templateHolder.Split('\n'));
+
         StringBuilder strcutSb = new StringBuilder();
+
         StringBuilder realSb = new StringBuilder();
 
-        string structs = string.Empty;
-
-        for (int i = 0; i < lines.Count; i++)
+        
+        for(int i=0; i < lines.Count;i++)
         {
-            string current = lines[i];
-
-            if (current.Contains(FOREVERY_LOOP))
+            if (lines[i].Contains(FOREVERY_LOOP) && (!lines[i].Contains(FOREVERY_PARAM_LOOP) && !lines[i].Contains(FOREVERY_ASSIGN_LOOP) && !lines[i].Contains(FOREVERY_CLASS_LOOP)))
             {
-                //Get the rest of the template
-                while (!current.Contains(FOREVERY_LOOP_END))
+                while (true)
                 {
-                    i++;
-                    current = lines[i];
-
-                    if (!current.Contains(FOREVERY_LOOP_END))
-                        strcutSb.AppendLine(lines[i]);
-                    else if(current.Contains(FOREVERY_LOOP_END))
+                    if (lines[i].Contains(FOREVERY_LOOP_END))
                     {
-                        string content = strcutSb.ToString();
-
-                        if (content.Length > 0)
-                            structs = BuildStructs(content);                    
-
-                        realSb.AppendLine(structs);
-                        string trimmed = realSb.ToString().TrimEnd('\n');
-                        realSb = new StringBuilder(trimmed);                    
+                        realSb.AppendLine(ReworkLoopString(FOREVERY_LOOP, strcutSb, false));
+                        strcutSb.Clear();
+                        break;
                     }
+                    ++i;
+                    strcutSb.AppendLine(lines[i]);
+                }
+            }else if(lines[i].Contains(FOREVERY_PARAM_LOOP))
+            {
+                while (true)
+                {
+                    if (lines[i].Contains(FOREVERY_PARAM_LOOP_END))
+                    {
+                        realSb.AppendLine(ReworkLoopString(FOREVERY_PARAM_LOOP, strcutSb, false));
+                        strcutSb.Clear();
+                        break;
+                    }
+                    ++i;
+                    strcutSb.AppendLine(lines[i]);
+                }
+            }else if(lines[i].Contains(FOREVERY_ASSIGN_LOOP))
+            {
+                while (true)
+                {
+                    if (lines[i].Contains(FOREVERY_ASSIGN_LOOP_END))
+                    {
+                        realSb.AppendLine(ReworkLoopString(FOREVERY_ASSIGN_LOOP, strcutSb, false));
+                        strcutSb.Clear();
+                        break;
+                    }
+                    ++i;
+                    strcutSb.AppendLine(lines[i]);
+                }
+            }else if(lines[i].Contains(FOREVERY_CLASS_LOOP))
+            {
+                while (true)
+                {
+                    if (lines[i].Contains(FOREVERY_CLASS_LOOP_END))
+                    {
+                        realSb.AppendLine(ReworkClassLoopString(strcutSb));
+                        strcutSb.Clear();
+                        break;
+                    }
+                    ++i;
+                    strcutSb.AppendLine(lines[i]);
                 }
             }
             else
-                realSb.AppendLine(current.Trim('\n'));           
+                realSb.AppendLine(lines[i]);
+            
         }
-
-        
 
 
         return realSb.ToString();
     }
 
-    private string BuildStructs(string content)
+    private void SetTotalVariables()
     {
-        List<string> lines = new List<string>(content.Split('\n'));
+        foreach (var data in itemsData)
+        {
+            foreach (var varData in data.itemVariables)
+            {
+                if(!totalVariables.ContainsKey(varData.Key))
+                {
+                    totalVariables.Add(varData.Key, varData.Value);
+                }
+            }
+        }
+    }
 
-        StringBuilder sb = new StringBuilder();
+    private string ReworkLoopString(string loopType,StringBuilder strcutSb, bool emptyParam)
+    {
+        StringBuilder parsedData = new StringBuilder();
+
+        List<string> tempData = new List<string>();
+
 
         foreach (var data in itemsData)
-        {            
-            StringBuilder variabelSubString = new StringBuilder();
-            for (int i = 0; i < lines.Count; i++)
+        {
+            int index = -1;
+
+            foreach (var keyValuePairData in totalVariables)
             {
-                string current = lines[i];
+                index++;
 
-                if (!current.Contains(STRUCT_LOOP) && !current.Contains("structName"))
-                    sb.AppendLine(current);
-
-                if (current.Contains(STRUCT_LOOP))
+                if (!tempData.Contains(keyValuePairData.Key))
                 {
-                    while(!current.Contains(STURCT_LOOP_END))
-                    {
-                        i++;
-                        current = lines[i];
+                    tempData.Add(keyValuePairData.Key);
 
-                        if (!current.Contains(STURCT_LOOP_END))
-                            variabelSubString.AppendLine(current);
+                    if (index < totalVariables.Count() - 1 && !loopType.Equals(FOREVERY_LOOP) && !loopType.Equals(FOREVERY_ASSIGN_LOOP))
+                    {
+                        parsedData.Append($"{ParseData(strcutSb.ToString(), keyValuePairData, loopType)},");
                     }
-
-                    foreach (var variables in data.itemVariables)
+                    else
                     {
-                        sb.AppendLine(ParseData(variabelSubString.ToString(), variables));
+                        parsedData.Append(ParseData(strcutSb.ToString(), keyValuePairData, loopType));
                     }
                 }
+            }
+        }       
+        
+        
+        tempData.Clear();
+        return parsedData.ToString();
+    }
 
-                int parseStart = current.IndexOf(">:");
+    private string ReworkFillClass( StringBuilder strcutSb, TemplateItemData data)
+    {
+        StringBuilder parsedData = new StringBuilder();
+        string sbString = strcutSb.ToString();
+        StringBuilder paramSb = new StringBuilder();
 
-                if (parseStart < 0)
-                    continue;
+        parsedData.Append(sbString.Replace(">:className:<", data.itemName));
 
-                parseStart += 2;
-                int endParse = current.IndexOf(":<");
+        int index = -1;
 
-                if (endParse < 0)
-                    throw new Exception("A parse has ended before it begun");
+        foreach (var keyValuePairData in totalVariables)
+        {
+            index++;
 
-                if (current.Contains("structName") && !current.Contains("varName"))
-                    sb.AppendLine(ParseLine(current, parseStart, endParse, data, true));
-                else if (current.Contains("structName") && current.Contains("varName"))
-                    sb.AppendLine(ParseLine(current, parseStart, endParse, data, false));                   
+            if(data.itemVariables.ContainsKey(keyValuePairData.Key))
+            {
+                if (index == totalVariables.Count() - 1)
+                {
+                    paramSb.AppendLine(ParseData("[1]", keyValuePairData, NONE));
+                }
+                else 
+                {
+                    paramSb.AppendLine($"{ParseData("[1]", keyValuePairData, NONE)},");
+                }
+            }
+            else
+            {
+                string paramName = keyValuePairData.Key;
+                object obj = keyValuePairData.Value;
 
+                if (index == totalVariables.Count() - 1)
+                {
+                    paramSb.AppendLine(ParseVariable("[1]", paramName, obj));
+                }
+                else
+                {
+                    paramSb.AppendLine($"{ParseVariable("[1]", paramName, obj)},");
+                }                    
             }
         }
 
-        return sb.ToString();
+        string parsedDataStr = parsedData.ToString();
+        parsedDataStr = parsedDataStr.Replace(FILL, paramSb.ToString());
+
+        return parsedDataStr;
     }
 
-   
-    private string ParseLine(string line, int parseStart, int endParse, TemplateItemData tempData, bool onlyStruct)
+
+    private string ReworkClassLoopString(StringBuilder strcutSb)
     {
-        string subString = line.Substring(parseStart - 2, endParse - parseStart + 4);
+        StringBuilder parsedData = new StringBuilder();
+        StringBuilder realSb = new StringBuilder();
+
+        parsedData.Append(strcutSb.ToString().Replace($">:{FOREVERY_CLASS_LOOP_END}:<", ""));
+
+
+        foreach (var data in itemsData)
+        {
+            realSb.AppendLine(ReworkFillClass(parsedData, data));
+        }
+
+        return realSb.ToString();
+    }
+     
+
+    private string ParseData(string content, KeyValuePair<string, object> varData, string loopType)
+    {
+        string dataTrim = content;
+
+        switch (loopType)
+        {
+            case FOREVERY_LOOP:
+                dataTrim = dataTrim.Replace($">:{FOREVERY_LOOP_END}:<", "");
+                break;
+            case FOREVERY_ASSIGN_LOOP:
+                dataTrim = dataTrim.Replace($">:{FOREVERY_ASSIGN_LOOP_END}:<", "");
+                break;
+            case FOREVERY_PARAM_LOOP:
+                dataTrim = dataTrim.Replace($">:{FOREVERY_PARAM_LOOP_END}:<", "");
+                break;
+        }
+
+        string[] data = ParseObject(varData.Value, false);
+
+        string returnData = string.Empty;
 
         
-        if (onlyStruct)
-        {            
-            return line.Replace(subString, $"{tempData.itemName.ToUpper()}Class");
-        }
-        else
-        {
-            return line.Replace(subString, $"{tempData.itemName.ToUpper()}Class {tempData.itemName}");
-        }
+            returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varData.Key).Replace("[1]", data[1]).Trim('\n');
+        
 
+        return returnData;
     }
 
-    private string ParseData(string content, KeyValuePair<string, object> varData)
+    private string ParseVariable(string content, string varName, object varData)
     {
-        string[] data = ParseObject(varData.Value);
+        string returnData = string.Empty;
+        string dataTrim = content;
 
-        return content.Replace("[0]", data[0]).Replace("Name", varData.Key).Replace("[1]", data[1]).Trim('\n');
+        dataTrim = dataTrim.Replace($">:{FOREVERY_PARAM_LOOP_END}:<", "");
+
+        string[] data = ParseObject(varData, true);
+
+        Type intType = typeof(int);
+            Type floatType = typeof(float);
+            Type boolType = typeof(bool);
+
+            if (varData.GetType().Equals(intType))
+            {
+                returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varName).Replace("[1]", "0");
+            }
+            else if (varData.GetType().Equals(floatType))
+            {
+                returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varName).Replace("[1]", "0f");
+            }
+            else if (varData.GetType().Equals(boolType))
+            {
+                returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varName).Replace("[1]", "false");
+            }
+            else
+            {
+                returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varName).Replace("[1]", data[1]).Trim('\n');
+            }
+
+        
+        return returnData;
     }
 
     /// <summary>
@@ -162,11 +303,17 @@ public class TemplateSystem
     /// </summary>
     /// <param name="data"></param>
     /// <returns></returns>
-    private string[] ParseObject(object data)
+    private string[] ParseObject(object data, bool hasDefaultValue)
     {
         string[] dataStr = new string[2];
 
         string objDataStr = data.ToString();
+
+        if(hasDefaultValue)
+        {
+            objDataStr = string.Empty;
+        }
+
 
         if (data is float)
         {

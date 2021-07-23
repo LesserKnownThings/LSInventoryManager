@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using System;
 
 public static class DynamicClassCreator
 {
@@ -24,7 +25,7 @@ public static class DynamicClassCreator
         return template.ParseData();
     }
 
-    private static TemplateItemData PrepareTemplateData(ItemCreatorWindow.Items item)
+    private static TemplateItemData PrepareTemplateData(ItemCreatorWindow.CustomItem item)
     {
 
         Dictionary<string, object> templateDict = new Dictionary<string, object>();
@@ -49,6 +50,9 @@ public static class DynamicClassCreator
 
         string data = CreateDynamicClass();
         FileManager.RegisterClassToFile($"{folderPath}{generatedClassPath}", data);
+
+        
     }
 }
+
 

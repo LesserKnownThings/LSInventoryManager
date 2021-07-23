@@ -26,7 +26,7 @@ public class ItemCreatorWindow : EditorWindow
     public static ItemCreatorWindow Instance { get { return instance; } }
 
     private Dictionary<object, string> allowedRefs;
-    public static List<Items> items = new List<Items>();
+    public static List<CustomItem> items = new List<CustomItem>();
     public static bool cannotCompile = false;
 
     private List<bool> hiddenItems = new List<bool>();
@@ -94,10 +94,19 @@ public class ItemCreatorWindow : EditorWindow
     {
         EditorGUILayout.BeginHorizontal();
 
+      
+
         GUI.contentColor = Color.yellow;
         GUILayout.Label("RPG Creator", EditorStyles.boldLabel);
+        GUI.backgroundColor = Color.blue;
+        if (GUILayout.Button("Compile Scripts",  GUILayout.MaxWidth(100f), GUILayout.MinHeight(30f)))
+        {
+            CompileData();
+        }
         GUI.contentColor = Color.white;
         EditorGUILayout.EndHorizontal();
+
+        
 
         GUI.backgroundColor = Color.white;
 
@@ -109,12 +118,16 @@ public class ItemCreatorWindow : EditorWindow
         GUILayout.BeginHorizontal();
 
         if (GUILayout.Button("New Item", GUILayout.MinHeight(BOTTOM_BUTTONS_SIZE), GUILayout.MaxWidth(250)))
+        {
             AddItem();
+        }
 
         GUI.backgroundColor = Color.yellow;
         if (GUILayout.Button("Save Data", GUILayout.MinHeight(BOTTOM_BUTTONS_SIZE)))
+        {
             SaveData();
-        
+        }       
+
         /*
         GUI.backgroundColor = Color.blue;
         if (GUILayout.Button("Compile", GUILayout.MinHeight(BOTTOM_BUTTONS_SIZE)))
@@ -122,7 +135,7 @@ public class ItemCreatorWindow : EditorWindow
         GUILayout.EndHorizontal();
     }
 
-    
+
     private void SaveData()
     {
         if (cannotCompile)
@@ -132,6 +145,16 @@ public class ItemCreatorWindow : EditorWindow
         }
 
         ItemCreator.SaveData();
+    }
+
+    private void CompileData()
+    {
+        if (cannotCompile)
+        {
+            Debug.LogError("Cannot compile, you must fix all errors before compiling");
+            return;
+        }
+        DynamicClassCreator.Compile();
     }
 
 
@@ -205,7 +228,7 @@ public class ItemCreatorWindow : EditorWindow
                 cannotCompile = false;
 
                 SaveData();
-            }
+            }          
 
             GUI.backgroundColor = Color.white;
             EditorGUILayout.EndVertical();
@@ -308,12 +331,35 @@ public class ItemCreatorWindow : EditorWindow
 
     }
 
+    #region Public API
+    public static CustomItem GetItem(int index)
+    {
+        if(index >= items.Count || index < 0)
+        {
+            Debug.LogError("Item does not exist, or index is out of range");
+            return null;
+        }
+        return items[index];
+    }
 
+    public static CustomItem GetItem(string itemName)
+    {
+        int index = items.FindIndex(x => { return itemName == x.name; });
+
+        if(index == -1)
+        {
+            Debug.LogError("Item does not exist, or index is out of range");
+            return null;
+        }
+
+        return items[index];
+    }
+    #endregion
 
     #region Private API
     private void AddItem()
     {
-        Items currentItem = new Items();
+        CustomItem currentItem = new CustomItem();
         currentItem.name = $"Item";
 
         currentItem.iconData = ItemCreator.SerializeTexture(defaultIcon);
@@ -327,7 +373,7 @@ public class ItemCreatorWindow : EditorWindow
         SaveData();
     }
 
-    private void AddItem(Items item)
+    private void AddItem(CustomItem item)
     {
         items.Add(item);
         hiddenItems.Add(true);
@@ -351,7 +397,7 @@ public class ItemCreatorWindow : EditorWindow
         SaveData();
     }
 
-    private void CheckItemName(Items selectedItem, int index)
+    private void CheckItemName(CustomItem selectedItem, int index)
     {
         int sameNameIndex = items.FindIndex(x => { return x.name == selectedItem.name && x.uid != selectedItem.uid; });
 
@@ -404,7 +450,7 @@ public class ItemCreatorWindow : EditorWindow
     
 
     [System.Serializable]    
-    public class Items
+    public class CustomItem
     {
         [HideInInspector]
         public string name;
