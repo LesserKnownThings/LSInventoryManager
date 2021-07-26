@@ -2,16 +2,16 @@
 using UnityEngine;
 using System;
 
-public class CellData : MonoBehaviour
+[System.Serializable]
+public class CellData
 {
+    public DynamicData itemData;
     public int index { get; private set; }
-    public object itemData;
-    public Type dataType;
-
-    public CellData(int index, Type dataType)
+    
+    public CellData(int index, DynamicData itemData)
     {
         this.index = index;
-        this.dataType = dataType;
+        this.itemData = itemData;
     }
 
     

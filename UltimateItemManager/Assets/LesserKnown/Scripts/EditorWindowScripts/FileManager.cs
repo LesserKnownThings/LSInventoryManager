@@ -41,6 +41,8 @@ public static class FileManager
         AssetDatabase.Refresh();
     }
 
+ 
+
     private static void AddText(FileStream fs, string value)
     {
         byte[] info = new UTF8Encoding(true).GetBytes(value);
@@ -93,8 +95,4 @@ public static class FileManager
 
 }
 
-[CreateAssetMenu(fileName ="some", menuName = "Lesser/Item")]
-public class Asd:ScriptableObject
-{
 
-}

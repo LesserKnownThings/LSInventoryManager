@@ -14,13 +14,16 @@ using System.Text.RegularExpressions;
 #if UNITY_EDITOR
 public class ItemCreatorWindow : EditorWindow
 {
+    public GUISkin menuItemsGUISettings;
+
     #region Size Variables
     const float BOTTOM_BUTTONS_SIZE = 35f;
     const float BUTTONS_SIZE = 85f;
     const float TEXT_AREA_SIZE = 225f;
-    #endregion
 
-    public Texture2D defaultIcon;
+    const float MENU_BUTTON_WIDTH = 150;
+    const float MENU_BUTTON_HEIGHT = 75;
+    #endregion
 
     private static ItemCreatorWindow instance;
     public static ItemCreatorWindow Instance { get { return instance; } }
@@ -92,32 +95,31 @@ public class ItemCreatorWindow : EditorWindow
 
     void OnGUI()
     {
-        EditorGUILayout.BeginHorizontal();
-
-      
+        EditorGUILayout.BeginHorizontal();      
 
         GUI.contentColor = Color.yellow;
         GUILayout.Label("RPG Creator", EditorStyles.boldLabel);
+
         GUI.backgroundColor = Color.blue;
-        if (GUILayout.Button("Compile Scripts",  GUILayout.MaxWidth(100f), GUILayout.MinHeight(30f)))
+        if (GUILayout.Button("Compile Scripts", GUILayout.MaxWidth(100f), GUILayout.MinHeight(30f)))
         {
             CompileData();
         }
+        GUI.backgroundColor = Color.white;
         GUI.contentColor = Color.white;
         EditorGUILayout.EndHorizontal();
 
-        
+        ///ITEMS AND SUB-MENUS
+        EditorGUILayout.BeginHorizontal();       
 
-        GUI.backgroundColor = Color.white;
+      //  DisplayMenuButtons();
 
-       
-
+        EditorGUILayout.BeginVertical();
 
         DrawItems();
 
         GUILayout.BeginHorizontal();
-
-        if (GUILayout.Button("New Item", GUILayout.MinHeight(BOTTOM_BUTTONS_SIZE), GUILayout.MaxWidth(250)))
+        if (GUILayout.Button("New Item", GUILayout.MinHeight(BOTTOM_BUTTONS_SIZE)))
         {
             AddItem();
         }
@@ -126,13 +128,38 @@ public class ItemCreatorWindow : EditorWindow
         if (GUILayout.Button("Save Data", GUILayout.MinHeight(BOTTOM_BUTTONS_SIZE)))
         {
             SaveData();
-        }       
+        }
 
-        /*
-        GUI.backgroundColor = Color.blue;
-        if (GUILayout.Button("Compile", GUILayout.MinHeight(BOTTOM_BUTTONS_SIZE)))
-            ItemCreator.GenerateAssetData();*/
+        GUI.backgroundColor = Color.white;
         GUILayout.EndHorizontal();
+        EditorGUILayout.EndVertical();
+
+
+        EditorGUILayout.EndHorizontal();
+    }
+
+    private void DisplayMenuButtons()
+    {
+        if (menuItemsGUISettings == null)
+        {
+            return;
+        }
+        //This is for all the menu buttons
+        EditorGUILayout.BeginVertical();
+
+        GUI.skin = menuItemsGUISettings;
+
+        if (GUILayout.Button("Items"))
+        {
+
+        }
+
+        if (GUILayout.Button("Classes"))
+        {
+
+        }
+        GUI.skin = null;
+        EditorGUILayout.EndVertical();
     }
 
 
@@ -140,10 +167,9 @@ public class ItemCreatorWindow : EditorWindow
     {
         if (cannotCompile)
         {
-            Debug.LogError("Cannot save, you must fix all errors before saving");
+            Debug.LogError("Cannot compile, you must fix all errors before compiling");
             return;
         }
-
         ItemCreator.SaveData();
     }
 
@@ -226,8 +252,6 @@ public class ItemCreatorWindow : EditorWindow
                 nameViolation.RemoveAt(i);
                 items.RemoveAt(i);
                 cannotCompile = false;
-
-                SaveData();
             }          
 
             GUI.backgroundColor = Color.white;
@@ -243,17 +267,12 @@ public class ItemCreatorWindow : EditorWindow
     /// <param name="index"></param>
     private void DrawIconSelection(int index)
     {
-        Texture2D itemIcon = ItemCreator.DeserializeTexture(items[index].iconData);
 
-        EditorGUILayout.BeginHorizontal();
+        Sprite currentSprite = ItemCreator.GetItemIcon(items[index].itemIconDirectory);   
 
-        EditorGUILayout.LabelField("Icon", GUILayout.MaxWidth(25f));
+        currentSprite = (Sprite)EditorGUILayout.ObjectField("Item Icon",currentSprite, typeof(Sprite), false);
 
-        itemIcon = (Texture2D)EditorGUILayout.ObjectField(itemIcon, typeof(Texture2D), allowSceneObjects: false);
-
-        EditorGUILayout.EndHorizontal();
-
-         items[index].iconData = ItemCreator.SerializeTexture(itemIcon);
+        items[index].itemIconDirectory = AssetDatabase.GetAssetPath(currentSprite);
     }
 
     private void DrawStatButtons(int index)
@@ -262,10 +281,7 @@ public class ItemCreatorWindow : EditorWindow
         GUI.backgroundColor = Color.yellow;
         if (GUILayout.Button("Add Stat", GUILayout.MaxWidth(BUTTONS_SIZE)))
             AddVairable(index);
-
-        GUI.backgroundColor = Color.red;
-        if (items[index].stats.Count > 0 && GUILayout.Button("Remove Stat", GUILayout.MaxWidth(BUTTONS_SIZE)))
-            RemoveVariable(index);
+       
         EditorGUILayout.EndHorizontal();
 
         GUI.backgroundColor = Color.white;
@@ -274,8 +290,9 @@ public class ItemCreatorWindow : EditorWindow
     private void DrawStats(int i)
     {
         for (int j = 0; j < items[i].stats.Count; j++)
-        {
-            EditorGUILayout.BeginHorizontal();
+        {   
+            EditorGUILayout.BeginHorizontal();            
+
             EditorGUILayout.LabelField("Stat Name", GUILayout.MaxWidth(75f));
             items[i].stats[j].statName = EditorGUILayout.TextField(items[i].stats[j].statName);
 
@@ -326,6 +343,11 @@ public class ItemCreatorWindow : EditorWindow
 
 
             items[i].stats[j].index = EditorGUILayout.Popup(items[i].stats[j].index, refsNames);
+
+            GUI.backgroundColor = Color.red;
+            if (GUILayout.Button("Remove Stat", GUILayout.MaxWidth(BUTTONS_SIZE)))
+                RemoveVariable(i);
+            GUI.backgroundColor = Color.white;
             EditorGUILayout.EndHorizontal();
         }
 
@@ -362,7 +384,7 @@ public class ItemCreatorWindow : EditorWindow
         CustomItem currentItem = new CustomItem();
         currentItem.name = $"Item";
 
-        currentItem.iconData = ItemCreator.SerializeTexture(defaultIcon);
+        currentItem.itemIconDirectory = "";
 
 
         currentItem.uid = Guid.NewGuid().ToString();
@@ -370,7 +392,6 @@ public class ItemCreatorWindow : EditorWindow
         hiddenItems.Add(true);
         nameInuse.Add(false);
         nameViolation.Add(new bool[] { false, false });        
-        SaveData();
     }
 
     private void AddItem(CustomItem item)
@@ -387,14 +408,12 @@ public class ItemCreatorWindow : EditorWindow
         items[index].stats[items[index].stats.Count - 1].index = 0;
         items[index].stats[items[index].stats.Count - 1].dataType = typeof(int);
         items[index].stats[items[index].stats.Count - 1].data = 0;
-        SaveData();
     }
 
     private void RemoveVariable(int index)
     {
         items[index].stats.RemoveAt(items[index].stats.Count - 1);
         cannotCompile = false;
-        SaveData();
     }
 
     private void CheckItemName(CustomItem selectedItem, int index)
@@ -438,15 +457,13 @@ public class ItemCreatorWindow : EditorWindow
         }
     }
 
-    [System.Serializable]
-    public class Icon
+    public class SerializedTexture
     {
-        public int width;
-        public int height;
-        public byte[] data;
-        public TextureFormat format;
+        public byte[] data { get; set; }
+        public int width { get; set; }
+        public int height { get; set; }
+        public TextureFormat format { get; set; }
     }
-
     
 
     [System.Serializable]    
@@ -457,7 +474,7 @@ public class ItemCreatorWindow : EditorWindow
         [HideInInspector]
         public string uid;
         [HideInInspector]
-        public Icon iconData;
+        public string itemIconDirectory;
         [HideInInspector]
         public List<ItemVariables> stats = new List<ItemVariables>();       
     }

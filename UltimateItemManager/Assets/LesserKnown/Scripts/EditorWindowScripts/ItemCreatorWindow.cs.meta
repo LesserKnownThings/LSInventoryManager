@@ -5,8 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - m_ViewDataDictionary: {instanceID: 0}
-  - defaultIcon: {fileID: 10300, guid: 0000000000000000f000000000000000, type: 0}
-  - templateText: {fileID: 4900000, guid: fe4a6452d8794d340b1efdc31f9b60eb, type: 3}
+  - menuItemsGUISettings: {fileID: 11400000, guid: b9ef019e90a50ed4ca607a153bc55940, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

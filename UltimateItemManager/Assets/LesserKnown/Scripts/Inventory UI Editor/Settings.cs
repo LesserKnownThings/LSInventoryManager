@@ -1,4 +1,4 @@
-﻿
+﻿using UnityEngine;
 
 [System.Serializable]
 public class Settings
@@ -13,6 +13,13 @@ public class Settings
     public float horizontalCellSize = 0f;
     public float verticalCellSize = 0f;
     public int cellNumber = 0;
+
+    public Color bgColor;
+    public Color slotBgColor;
+
+    public Sprite slotBgSprite;
+    public Sprite defaultItemSprite;
+    public Sprite bgSprite;
 
     public Settings()
     {
@@ -31,5 +38,8 @@ public class Settings
         horizontalCellSize = 0f;
         verticalCellSize = 0f;
         cellNumber = 0;
+
+        bgColor = new Color();
+        slotBgColor = new Color();
     }
 }

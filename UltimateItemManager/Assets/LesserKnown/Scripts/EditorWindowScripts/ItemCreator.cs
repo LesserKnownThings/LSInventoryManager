@@ -9,7 +9,6 @@ public static class ItemCreator
 {
     const string folderPath = "Assets/LesserKnown/ItemManager/";
     const string scriptableObjectsFolder = "Assets/Resources/Items";
-    const string ASSET_FOLDER_PATH = "Assets/LesserKnown/Resources/Generated/Items/ItemsData.asset";
     const string informationFilePath = "data.text";
 
 
@@ -21,9 +20,7 @@ public static class ItemCreator
 
         if (items == null || items.Count == 0)
             return new List<ItemCreatorWindow.CustomItem>();
-
-        List <ItemCreatorWindow.CustomItem> cloneItems = items;     
-
+  
 
         foreach (var item in items)
         {
@@ -42,7 +39,6 @@ public static class ItemCreator
     public static void SaveData()
     {
         FileManager.RegisterDataToFile(folderPath, informationFilePath, ItemCreatorWindow.items);
-        GenerateAssetData();
     }
     
 
@@ -58,11 +54,21 @@ public static class ItemCreator
         return (T)data;
     }
 
-
-    public static ItemCreatorWindow.Icon SerializeTexture(Texture2D texture)
+    public static Sprite GetItemIcon(string path)
     {
-        ItemCreatorWindow.Icon icon = new ItemCreatorWindow.Icon();
+        return (Sprite)AssetDatabase.LoadAssetAtPath(path, typeof(Sprite));
+    }
 
+
+    public static ItemCreatorWindow.SerializedTexture SerializeTexture(Texture2D texture)
+    {
+        ItemCreatorWindow.SerializedTexture icon = new ItemCreatorWindow.SerializedTexture();
+
+        if(texture == null)
+        {
+            return null;
+        }
+        
         icon.data = texture.GetRawTextureData();
         icon.width = texture.width;
         icon.height = texture.height;
@@ -73,31 +79,22 @@ public static class ItemCreator
 
 
 
-    public static Texture2D DeserializeTexture(ItemCreatorWindow.Icon icon)
+    public static Texture2D DeserializeTexture(ItemCreatorWindow.SerializedTexture serializedTexture)
     {
-        Texture2D texture = new Texture2D(icon.width, icon.height, icon.format, false);
-        texture.LoadRawTextureData(icon.data);
+        if(serializedTexture == null)
+        {
+            return null;
+        }
+
+        Texture2D texture = new Texture2D(serializedTexture.width, serializedTexture.height, serializedTexture.format, false);
+        texture.LoadRawTextureData(serializedTexture.data);
         texture.Apply();
         return texture;
     }
 
-    public static void GenerateAssetData()
-    {
-        ItemsAssets itemsAsset = ScriptableObject.CreateInstance<ItemsAssets>();
-        itemsAsset.itemsData = ItemCreatorWindow.items;
-        AssetDatabase.CreateAsset(itemsAsset, ASSET_FOLDER_PATH);
-        AssetDatabase.SaveAssets();
-
-        AssetDatabase.Refresh();
-    }
+  
 }
 
-[CreateAssetMenu(fileName = "Item", menuName = "Lesser/Dynamic")]
-public class ItemsAssets:ScriptableObject
-{
-    [HideInInspector]
-    public List<ItemCreatorWindow.CustomItem> itemsData;
-}
 
 
 

@@ -57,52 +57,13 @@ public class TemplateSystem
         
         for(int i=0; i < lines.Count;i++)
         {
-            if (lines[i].Contains(FOREVERY_LOOP) && (!lines[i].Contains(FOREVERY_PARAM_LOOP) && !lines[i].Contains(FOREVERY_ASSIGN_LOOP) && !lines[i].Contains(FOREVERY_CLASS_LOOP)))
+            if (lines[i].Contains(FOREVERY_LOOP))
             {
                 while (true)
                 {
                     if (lines[i].Contains(FOREVERY_LOOP_END))
                     {
                         realSb.AppendLine(ReworkLoopString(FOREVERY_LOOP, strcutSb, false));
-                        strcutSb.Clear();
-                        break;
-                    }
-                    ++i;
-                    strcutSb.AppendLine(lines[i]);
-                }
-            }else if(lines[i].Contains(FOREVERY_PARAM_LOOP))
-            {
-                while (true)
-                {
-                    if (lines[i].Contains(FOREVERY_PARAM_LOOP_END))
-                    {
-                        realSb.AppendLine(ReworkLoopString(FOREVERY_PARAM_LOOP, strcutSb, false));
-                        strcutSb.Clear();
-                        break;
-                    }
-                    ++i;
-                    strcutSb.AppendLine(lines[i]);
-                }
-            }else if(lines[i].Contains(FOREVERY_ASSIGN_LOOP))
-            {
-                while (true)
-                {
-                    if (lines[i].Contains(FOREVERY_ASSIGN_LOOP_END))
-                    {
-                        realSb.AppendLine(ReworkLoopString(FOREVERY_ASSIGN_LOOP, strcutSb, false));
-                        strcutSb.Clear();
-                        break;
-                    }
-                    ++i;
-                    strcutSb.AppendLine(lines[i]);
-                }
-            }else if(lines[i].Contains(FOREVERY_CLASS_LOOP))
-            {
-                while (true)
-                {
-                    if (lines[i].Contains(FOREVERY_CLASS_LOOP_END))
-                    {
-                        realSb.AppendLine(ReworkClassLoopString(strcutSb));
                         strcutSb.Clear();
                         break;
                     }
@@ -118,6 +79,8 @@ public class TemplateSystem
 
         return realSb.ToString();
     }
+
+
 
     private void SetTotalVariables()
     {
@@ -139,10 +102,10 @@ public class TemplateSystem
 
         List<string> tempData = new List<string>();
 
-
         foreach (var data in itemsData)
         {
             int index = -1;
+                       
 
             foreach (var keyValuePairData in totalVariables)
             {
@@ -166,6 +129,9 @@ public class TemplateSystem
         
         
         tempData.Clear();
+
+
+
         return parsedData.ToString();
     }
 
@@ -185,13 +151,15 @@ public class TemplateSystem
 
             if(data.itemVariables.ContainsKey(keyValuePairData.Key))
             {
+                KeyValuePair<string, object> currentKeyValuePairData = new KeyValuePair<string, object>(keyValuePairData.Key, data.itemVariables[keyValuePairData.Key]);
+
                 if (index == totalVariables.Count() - 1)
                 {
-                    paramSb.AppendLine(ParseData("[1]", keyValuePairData, NONE));
+                    paramSb.AppendLine(ParseData("[1]", currentKeyValuePairData, NONE));
                 }
                 else 
                 {
-                    paramSb.AppendLine($"{ParseData("[1]", keyValuePairData, NONE)},");
+                    paramSb.AppendLine($"{ParseData("[1]", currentKeyValuePairData, NONE)},");
                 }
             }
             else
@@ -211,7 +179,7 @@ public class TemplateSystem
         }
 
         string parsedDataStr = parsedData.ToString();
-        parsedDataStr = parsedDataStr.Replace(FILL, paramSb.ToString());
+        parsedDataStr = parsedDataStr.Replace(FILL, paramSb.ToString());        
 
         return parsedDataStr;
     }
