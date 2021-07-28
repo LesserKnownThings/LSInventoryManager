@@ -16,6 +16,9 @@ public class ItemCreatorWindow : EditorWindow
 {
     public GUISkin menuItemsGUISettings;
 
+    private const string STACKABLE_TOOLTIP = "Select this if the item can stack multiple times";
+    private const string STACKABLE_AMOUNT_TOOLTIP = "The maximum amount that the item can stack";
+
     #region Size Variables
     const float BOTTOM_BUTTONS_SIZE = 35f;
     const float BUTTONS_SIZE = 85f;
@@ -85,9 +88,18 @@ public class ItemCreatorWindow : EditorWindow
     
     private void OnEnable()
     {
-        foreach (var item in ItemCreator.GetData())
+        List<CustomItem> virtualItems = ItemCreator.GetData();
+
+        if (virtualItems == null)
         {
-            AddItem(item);
+            return;
+        }
+        else
+        {
+            foreach (var item in virtualItems)
+            {
+                AddItem(item);
+            }
         }
     }
 
@@ -195,7 +207,7 @@ public class ItemCreatorWindow : EditorWindow
 
     private void DrawItems()
     {
-        if (items.Count == 0 || items == null)
+        if (items.Count == 0)
             return;        
         
         scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
@@ -220,15 +232,31 @@ public class ItemCreatorWindow : EditorWindow
             if (!hiddenItems[i])
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Name", GUILayout.MaxWidth(110f));
-                items[i].name = EditorGUILayout.TextField(items[i].name, GUILayout.MaxWidth(200f));
+                EditorGUILayout.LabelField("Name", GUILayout.ExpandWidth(false));
+                items[i].name = EditorGUILayout.TextField(items[i].name, GUILayout.ExpandWidth(false));
 
 
-                nameViolation[i][0] = !CheckNameViolation(items[i].name);      
+                nameViolation[i][0] = !CheckNameViolation(items[i].name);
 
+                EditorGUILayout.BeginVertical();
+
+                items[i].isStackable = EditorGUILayout.Toggle(new GUIContent("Stackable", STACKABLE_TOOLTIP), items[i].isStackable, GUILayout.ExpandWidth(false));
+
+                if(items[i].isStackable)
+                {
+                    items[i].stackAmount = EditorGUILayout.IntField(new GUIContent("Stack Amount", STACKABLE_AMOUNT_TOOLTIP), items[i].stackAmount, GUILayout.ExpandWidth(false));
+                }
+                else
+                {
+                    items[i].stackAmount = 1;
+                }
+
+                EditorGUILayout.EndVertical();
 
                 ///Draw Icon select
                 DrawIconSelection(i);
+
+                
 
                 EditorGUILayout.EndHorizontal();
 
@@ -252,6 +280,7 @@ public class ItemCreatorWindow : EditorWindow
                 nameViolation.RemoveAt(i);
                 items.RemoveAt(i);
                 cannotCompile = false;
+                SaveData();
             }          
 
             GUI.backgroundColor = Color.white;
@@ -267,12 +296,15 @@ public class ItemCreatorWindow : EditorWindow
     /// <param name="index"></param>
     private void DrawIconSelection(int index)
     {
+        Sprite currentSprite = ItemCreator.GetItemIcon(items[index].itemIconDirectory);
 
-        Sprite currentSprite = ItemCreator.GetItemIcon(items[index].itemIconDirectory);   
+        currentSprite = (Sprite)EditorGUILayout.ObjectField("Item Icon",currentSprite, typeof(Sprite), false, GUILayout.ExpandWidth(false));
 
-        currentSprite = (Sprite)EditorGUILayout.ObjectField("Item Icon",currentSprite, typeof(Sprite), false);
-
-        items[index].itemIconDirectory = AssetDatabase.GetAssetPath(currentSprite);
+        if(!AssetDatabase.GetAssetPath(currentSprite).Equals(items[index].itemIconDirectory))
+        {
+            items[index].itemIconDirectory = AssetDatabase.GetAssetPath(currentSprite);
+            SaveData();
+        }        
     }
 
     private void DrawStatButtons(int index)
@@ -280,7 +312,9 @@ public class ItemCreatorWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         GUI.backgroundColor = Color.yellow;
         if (GUILayout.Button("Add Stat", GUILayout.MaxWidth(BUTTONS_SIZE)))
+        {
             AddVairable(index);
+        }
        
         EditorGUILayout.EndHorizontal();
 
@@ -294,7 +328,7 @@ public class ItemCreatorWindow : EditorWindow
             EditorGUILayout.BeginHorizontal();            
 
             EditorGUILayout.LabelField("Stat Name", GUILayout.MaxWidth(75f));
-            items[i].stats[j].statName = EditorGUILayout.TextField(items[i].stats[j].statName);
+            items[i].stats[j].statName = EditorGUILayout.TextField(items[i].stats[j].statName, GUILayout.ExpandWidth(false));
 
             EditorGUILayout.LabelField("Data", GUILayout.MaxWidth(40f));
 
@@ -391,7 +425,9 @@ public class ItemCreatorWindow : EditorWindow
         items.Add(currentItem);
         hiddenItems.Add(true);
         nameInuse.Add(false);
-        nameViolation.Add(new bool[] { false, false });        
+        nameViolation.Add(new bool[] { false, false });
+
+        SaveData();
     }
 
     private void AddItem(CustomItem item)
@@ -408,12 +444,16 @@ public class ItemCreatorWindow : EditorWindow
         items[index].stats[items[index].stats.Count - 1].index = 0;
         items[index].stats[items[index].stats.Count - 1].dataType = typeof(int);
         items[index].stats[items[index].stats.Count - 1].data = 0;
+
+        SaveData();
     }
 
     private void RemoveVariable(int index)
     {
         items[index].stats.RemoveAt(items[index].stats.Count - 1);
         cannotCompile = false;
+
+        SaveData();
     }
 
     private void CheckItemName(CustomItem selectedItem, int index)
@@ -475,6 +515,10 @@ public class ItemCreatorWindow : EditorWindow
         public string uid;
         [HideInInspector]
         public string itemIconDirectory;
+        [HideInInspector]
+        public bool isStackable;
+        [HideInInspector]
+        public int stackAmount;
         [HideInInspector]
         public List<ItemVariables> stats = new List<ItemVariables>();       
     }

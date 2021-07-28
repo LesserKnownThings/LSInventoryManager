@@ -17,18 +17,9 @@ public static class ItemCreator
     {
         List<ItemCreatorWindow.CustomItem> items = FileManager.GetData<List<ItemCreatorWindow.CustomItem>>(folderPath, informationFilePath);
 
-
-        if (items == null || items.Count == 0)
-            return new List<ItemCreatorWindow.CustomItem>();
-  
-
-        foreach (var item in items)
+        if (items == null)
         {
-            foreach (var stat in item.stats)
-            {
-                Type type = stat.dataType;
-                stat.data = Convert.ChangeType(stat.data, type);
-            }
+            return new List<ItemCreatorWindow.CustomItem>();
         }
 
         return items;

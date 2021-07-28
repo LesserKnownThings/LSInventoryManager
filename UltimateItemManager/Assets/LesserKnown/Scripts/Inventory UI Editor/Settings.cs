@@ -1,4 +1,6 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
+
 
 [System.Serializable]
 public class Settings
@@ -20,10 +22,45 @@ public class Settings
     public Sprite slotBgSprite;
     public Sprite defaultItemSprite;
     public Sprite bgSprite;
+    public Sprite closeButtonSprite;
+
+    public KeyCode uiOpenInput;
+
+    public delegate void ButtonCloseDelegate();
+    public ButtonCloseDelegate buttonClose;
 
     public Settings()
     {
 
+    }
+
+    public float GetInventoryWidth()
+    {
+        int multiplier = 1;
+        int cellMult = 0;
+
+        if(cellNumber > 10)
+        {
+            multiplier = cellNumber / 10;
+        }
+
+        switch(multiplier)
+        {
+            case 1:
+                cellMult = 4;
+                break;
+            case 2:
+                cellMult = 5;
+                break;
+            case 3:
+                cellMult = 6;
+                break;
+            case 4:
+                cellMult = 7;
+                break;
+        }
+
+        return (cellMult * horizontalCellSize) + leftPadding + rightPadding;
     }
 
     public void ResetSettings()
@@ -41,5 +78,6 @@ public class Settings
 
         bgColor = new Color();
         slotBgColor = new Color();
+
     }
 }

@@ -6,6 +6,10 @@ public class DynamicData:ScriptableObject
 {	
 	public string itemName;
 	public Sprite itemIcon;
-		public float damage;
-				public int health;
+	public bool isStackable;
+	public int stackAmount;
+		public int damage;
+				public int magicDamage;
+				public int armor;
+				public int healthAmount;
 }

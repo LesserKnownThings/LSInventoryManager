@@ -85,6 +85,8 @@ public static class DynamicClassCreator
 
         obj.itemIcon = currentText;
         obj.itemName = item.name;
+        obj.isStackable = item.isStackable;
+        obj.stackAmount = item.stackAmount;
 
         foreach (var field in fields)
         {

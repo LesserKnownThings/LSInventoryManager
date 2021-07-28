@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 11eb5d9b18a9a8f4b9be71756ab184e1, type: 3}
-  m_Name: sword
+  m_Name: helmet
   m_EditorClassIdentifier: 
-  itemName: sword
-  itemIcon: {fileID: 21300000, guid: 7befb85f25bbaac4f8497f54ffcc86b7, type: 3}
+  itemName: helmet
+  itemIcon: {fileID: 21300000, guid: 60888cc7e9b670144aa100652169d088, type: 3}
   isStackable: 0
   stackAmount: 1
-  damage: 15
-  magicDamage: 5
-  armor: 0
+  damage: 0
+  magicDamage: 0
+  armor: 10
   healthAmount: 0

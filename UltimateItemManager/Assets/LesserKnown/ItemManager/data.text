@@ -1,33 +1,52 @@
 [
   {
-    "name": "Item",
-    "uid": "e036594d-f3ff-4110-8e12-0ee9b0d578ae",
-    "itemIconDirectory": "Assets/LesserKnown/Icons/SGI_addons_179.png",
+    "name": "sword",
+    "uid": "8fce29d6-e1ac-4b46-9ac4-b5b72b80fd45",
+    "itemIconDirectory": "Assets/LesserKnown/Resources/Icons/SGI_11.png",
+    "isStackable": false,
+    "stackAmount": 1,
     "stats": [
       {
-        "index": 1,
+        "index": 0,
         "statName": "damage",
-        "data": 15.0,
-        "dataType": "System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+        "data": 15,
+        "dataType": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
       },
       {
         "index": 0,
-        "statName": "health",
-        "data": 150,
+        "statName": "magicDamage",
+        "data": 5,
         "dataType": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
       }
     ]
   },
   {
-    "name": "Sword",
-    "uid": "4f996ec5-f5a8-4c9d-833b-7fb5c56f8380",
-    "itemIconDirectory": "Assets/LesserKnown/Icons/SGI_addons_179.png",
+    "name": "helmet",
+    "uid": "d21bde3f-6dc4-48a5-8529-a65e95fd5558",
+    "itemIconDirectory": "Assets/LesserKnown/Resources/Icons/SGI_12.png",
+    "isStackable": false,
+    "stackAmount": 1,
     "stats": [
       {
-        "index": 1,
-        "statName": "damage",
-        "data": 15.0,
-        "dataType": "System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+        "index": 0,
+        "statName": "armor",
+        "data": 10,
+        "dataType": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
+      }
+    ]
+  },
+  {
+    "name": "potions",
+    "uid": "4431a59a-b8bf-407b-8170-065193a6053a",
+    "itemIconDirectory": "Assets/LesserKnown/Resources/Icons/SGI_28.png",
+    "isStackable": true,
+    "stackAmount": 25,
+    "stats": [
+      {
+        "index": 0,
+        "statName": "healthAmount",
+        "data": 200,
+        "dataType": "System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
       }
     ]
   }

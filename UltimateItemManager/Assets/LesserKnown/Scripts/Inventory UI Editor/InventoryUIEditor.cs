@@ -3,6 +3,8 @@ using UnityEditor.AnimatedValues;
 using UnityEngine.Events;
 using UnityEngine;
 using System.IO;
+using System.Linq;
+
 
 #if UNITY_EDITOR
 [CustomEditor(typeof(InventoryManager))]
@@ -20,10 +22,12 @@ public class InventoryUIEditor : Editor
     private const string SPRITE_BG_TOOLTIP = "The sprite for the inventory window";
     private const string SPRITE_CELL_BG_TOOLTIP = "The sprite used for the cell inside the inventory window";
     private const string SPRITE_DEFAULT_ITEM_TOOLTIP = "The sprite used to render the default (empty slot) items inside the cells";
+    private const string CLOSE_BUTTON_SPRITE = "The sprite used to render the close button for the inventory";
+    private const string UI_INPUT_STRING = "The input used to open/close the UI. You will have to set this one up with the old Unity Input System";
 
     private readonly int[] MAX_MIN_PADDING = { 0, 200 };
     private readonly int[] MAX_MIN_CELL_SIZE = { 0, 90 };
-    private readonly int[] MAX_MIN_CELL_AMOUNT = { 0, 40 };
+    private readonly int[] MAX_MIN_CELL_AMOUNT = { 0, 42 };
 
     private bool showPadding;
     private bool showSprites;
@@ -54,12 +58,17 @@ public class InventoryUIEditor : Editor
 
         if (mainScript.onValueChange && mainScript.settings != localSettings)
         {
-            UICreator.CreatePreview(mainScript.settings);
-            localSettings = mainScript.settings;
+            UICreator.CreatePreview(ref mainScript.settings, mainScript.transform);
+            localSettings = mainScript.settings;           
         }
 
         mainScript.settings.bgColor = EditorGUILayout.ColorField(new GUIContent("BG color", BG_COLOR_TOOLTIP), mainScript.settings.bgColor);
         mainScript.settings.slotBgColor = EditorGUILayout.ColorField(new GUIContent("Slot BG color", SLOT_BG_COLOR_TOOLTIP), mainScript.settings.slotBgColor);
+
+        EditorGUILayout.Space(10);
+        mainScript.settings.uiOpenInput = (KeyCode)EditorGUILayout.EnumPopup(new GUIContent("UI Input", UI_INPUT_STRING), mainScript.settings.uiOpenInput);
+        
+        EditorGUILayout.Space(10);
 
         DisplaySprites();
         DisplayPadding();
@@ -87,6 +96,11 @@ public class InventoryUIEditor : Editor
             mainScript.settings.defaultItemSprite = (Sprite)EditorGUILayout.ObjectField(mainScript.settings.defaultItemSprite, typeof(Sprite), false);
             EditorGUILayout.EndHorizontal();
 
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.LabelField(new GUIContent("Close button Sprite", CLOSE_BUTTON_SPRITE));
+            mainScript.settings.closeButtonSprite = (Sprite)EditorGUILayout.ObjectField(mainScript.settings.closeButtonSprite, typeof(Sprite), false);
+            EditorGUILayout.EndHorizontal();
+
         }
     }
 
@@ -109,15 +123,27 @@ public class InventoryUIEditor : Editor
         GUI.backgroundColor = Color.green;
         if (GUILayout.Button("Add random item", GUILayout.MinHeight(25)))
         {
-            foreach (var item in InventoryManager.items)
-            {
+            DynamicData[] folderItems = Resources.LoadAll(GENERATED_ITEMS_FOLDER).Cast<DynamicData>().ToArray();
 
+            int emptyIndex = UICreator.cells.FindIndex(x => { return x.cellData.isEmpty; });
+
+            if(emptyIndex > -1)
+            {
+                int randomItem = Random.Range(0, folderItems.Length);
+                UICreator.cells[emptyIndex].cellData.AssignItem(folderItems[randomItem]);
+            }
+            else
+            {
+                Debug.LogError("No more empty cells!");
             }
         }
         GUI.backgroundColor = Color.red;
         if(GUILayout.Button("Clear items", GUILayout.MinHeight(25)))
         {
-
+            foreach (var cell in UICreator.cells)
+            {
+                cell.cellData.ClearCell();
+            }
         }
         EditorGUILayout.EndHorizontal();
 
@@ -126,7 +152,7 @@ public class InventoryUIEditor : Editor
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Create UI Preview", GUILayout.MinHeight(25)))
         {
-            UICreator.CreatePreview(mainScript.settings);
+            UICreator.CreatePreview(ref mainScript.settings, mainScript.transform);          
         }
         GUI.backgroundColor = Color.red;
         if (GUILayout.Button("Delete UI Preview", GUILayout.MinHeight(25)))
@@ -149,8 +175,8 @@ public class InventoryUIEditor : Editor
 
         GUI.backgroundColor = Color.cyan;
         if(GUILayout.Button("Create Prefab", GUILayout.MinHeight(25)))
-        {
-            CreatePrefab();
+        {      
+            CreatePrefab();     
         }
 
         GUILayout.EndHorizontal();
@@ -172,9 +198,11 @@ public class InventoryUIEditor : Editor
             File.Delete(localPath);
         }
 
-        localPath = AssetDatabase.GenerateUniqueAssetPath(localPath);        
+        localPath = AssetDatabase.GenerateUniqueAssetPath(localPath);
 
         PrefabUtility.SaveAsPrefabAssetAndConnect(UICreator.inventoryCanvas, localPath, InteractionMode.UserAction);
     }
+
+   
 }
 #endif
