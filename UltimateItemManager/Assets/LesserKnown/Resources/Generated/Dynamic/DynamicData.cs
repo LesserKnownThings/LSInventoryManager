@@ -8,8 +8,6 @@ public class DynamicData:ScriptableObject
 	public Sprite itemIcon;
 	public bool isStackable;
 	public int stackAmount;
-		public int damage;
-				public int magicDamage;
-				public int armor;
-				public int healthAmount;
+		public float damage;
+				public float magicDamage;
 }

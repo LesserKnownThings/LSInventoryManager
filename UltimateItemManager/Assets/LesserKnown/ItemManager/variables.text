@@ -1,0 +1,26 @@
+[
+  {
+    "index": 1,
+    "varName": "damage",
+    "data": 0.0,
+    "dataType": "System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+    "uid": "eea95563-d256-48ff-a1e2-76ae5efab399",
+    "overrideData": false
+  },
+  {
+    "index": 1,
+    "varName": "magicDamage",
+    "data": 0.0,
+    "dataType": "System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+    "uid": "8d8ffe6b-603e-492b-bf36-62fb1b3e136d",
+    "overrideData": false
+  },
+  {
+    "index": 2,
+    "varName": "description",
+    "data": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+    "dataType": "System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+    "uid": "02ac3fad-6486-45d4-a796-1ecd31f92794",
+    "overrideData": false
+  }
+]

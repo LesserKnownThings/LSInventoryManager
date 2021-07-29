@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿#if UNITY_EDITOR
+using System.IO;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEditor;
@@ -27,30 +28,30 @@ public static class DynamicClassCreator
         TemplateSystem template = new TemplateSystem(textAsset.text);
 
         for (int i = 0; i < ItemCreatorWindow.items.Count; i++)
-            template.AddVariable(PrepareTemplateData(ItemCreatorWindow.items[i]));
+            template.AddVariable(PrepareTemplateData());
 
         return template.ParseData();
     }
 
     
 
-    private static TemplateItemData PrepareTemplateData(ItemCreatorWindow.CustomItem item)
+    private static TemplateItemData PrepareTemplateData()
     {
-
+        
         Dictionary<string, object> templateDict = new Dictionary<string, object>();
-
-        foreach (var stat in item.stats)
+        
+        
+        foreach (var variable in ItemCreatorWindow.variables)
         {
-            templateDict.Add(stat.statName, stat.data);
+            templateDict.Add(variable.varName, variable.data);
         }
 
         TemplateItemData templateData = 
             new TemplateItemData
             (
-                item.name,
                 templateDict
                 );
-
+        
         return templateData;
     }
 
@@ -58,21 +59,22 @@ public static class DynamicClassCreator
     {          
 
         string data = CreateDynamicClass(TEMPLATE_PATH);
-        FileManager.RegisterClassToFile($"{DYNAMIC_FOLDER_PATH}{generatedClassPath}", data);
+        
+       FileManager.RegisterClassToFile($"{DYNAMIC_FOLDER_PATH}{generatedClassPath}", data);
 
-        if (Directory.Exists(ITEMS_FOLDER_PATH))
-        {
-            Directory.Delete(ITEMS_FOLDER_PATH, true);
-            Directory.CreateDirectory(ITEMS_FOLDER_PATH);
-        }
+       if (Directory.Exists(ITEMS_FOLDER_PATH))
+       {
+           Directory.Delete(ITEMS_FOLDER_PATH, true);
+           Directory.CreateDirectory(ITEMS_FOLDER_PATH);
+       }
 
-        for (int i = 0; i < ItemCreatorWindow.items.Count; i++)
-        {
-            CreateScriptableObjects(ItemCreatorWindow.items[i]);
-        }
+       for (int i = 0; i < ItemCreatorWindow.items.Count; i++)
+       {
+           CreateScriptableObjects(ItemCreatorWindow.items[i]);
+       }
 
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
+       AssetDatabase.SaveAssets();
+       AssetDatabase.Refresh();
     }
 
     private static void CreateScriptableObjects(ItemCreatorWindow.CustomItem item)
@@ -88,20 +90,28 @@ public static class DynamicClassCreator
         obj.isStackable = item.isStackable;
         obj.stackAmount = item.stackAmount;
 
+        
         foreach (var field in fields)
         {
-            int hasIndex = item.stats.FindIndex(x => { return x.statName == field.Name; });
+            int hasIndex = item.addedVariables.FindIndex(x => { return x.varName == field.Name; });
+
             if (hasIndex > -1)
-            {
-                field.SetValue(obj, item.stats[hasIndex].data);
+            {     
+                Type t = item.addedVariables[hasIndex].data.GetType();
+
+                if (field.GetType() != t)
+                {
+                    item.addedVariables[hasIndex].data = Convert.ChangeType(item.addedVariables[hasIndex].data, item.addedVariables[hasIndex].dataType);
+                }
+                field.SetValue(obj, item.addedVariables[hasIndex].data);
             }
         }
 
-        AssetDatabase.CreateAsset(obj, $"{ITEMS_FOLDER_PATH}/{item.name}.asset");
-        AssetDatabase.Refresh();
-        AssetDatabase.SaveAssets();
+        
+        AssetDatabase.CreateAsset(obj, $"{ITEMS_FOLDER_PATH}/{item.name}.asset");        
     }
 
 }
 
 
+#endif

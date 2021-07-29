@@ -1,0 +1,19 @@
+[
+  {
+    "name": "sword",
+    "uid": "2d182997-c490-41bc-ba6a-6068ebd87ad0",
+    "itemIconDirectory": "Assets/LesserKnown/Resources/Icons/SGI_11.png",
+    "isStackable": false,
+    "stackAmount": 1,
+    "addedVariables": [
+      {
+        "index": 1,
+        "varName": "damage",
+        "data": 0.0,
+        "dataType": "System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089",
+        "uid": "eea95563-d256-48ff-a1e2-76ae5efab399",
+        "overrideData": false
+      }
+    ]
+  }
+]

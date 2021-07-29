@@ -1,12 +1,11 @@
-﻿using UnityEditor;
-using UnityEditor.AnimatedValues;
-using UnityEngine.Events;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 using UnityEngine;
 using System.IO;
 using System.Linq;
 
 
-#if UNITY_EDITOR
+
 [CustomEditor(typeof(InventoryManager))]
 [CanEditMultipleObjects]
 public class InventoryUIEditor : Editor

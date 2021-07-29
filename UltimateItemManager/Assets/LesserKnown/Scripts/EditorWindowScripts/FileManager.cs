@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 using UnityEngine;
 using System.IO;
 using Newtonsoft.Json;
@@ -95,4 +96,4 @@ public static class FileManager
 
 }
 
-
+#endif

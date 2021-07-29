@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.IO;
 using UnityEditor;
 using Newtonsoft.Json;
@@ -9,29 +10,38 @@ public static class ItemCreator
 {
     const string folderPath = "Assets/LesserKnown/ItemManager/";
     const string scriptableObjectsFolder = "Assets/Resources/Items";
-    const string informationFilePath = "data.text";
+    const string ITEMS_DATA_PATH = "items.text";
+    const string VARS_DATA_PATH = "variables.text";
 
 
 
-    public static List<ItemCreatorWindow.CustomItem> GetData()
+    public static T  GetData<T>(DataTypeEnum dataType)
     {
-        List<ItemCreatorWindow.CustomItem> items = FileManager.GetData<List<ItemCreatorWindow.CustomItem>>(folderPath, informationFilePath);
-
-        if (items == null)
+        T data = default;
+        if (dataType == DataTypeEnum.Items)
         {
-            return new List<ItemCreatorWindow.CustomItem>();
+            data = FileManager.GetData<T>(folderPath, ITEMS_DATA_PATH);
+        }else if (dataType == DataTypeEnum.Variables)
+        {
+            data = FileManager.GetData<T>(folderPath, VARS_DATA_PATH);
         }
 
-        return items;
+        return data;
     }
+
+    
 
 
   
-    public static void SaveData()
+    public static void SaveItemData()
     {
-        FileManager.RegisterDataToFile(folderPath, informationFilePath, ItemCreatorWindow.items);
+        FileManager.RegisterDataToFile(folderPath, ITEMS_DATA_PATH, ItemCreatorWindow.items);
     }
     
+    public static void SaveVarData()
+    {
+        FileManager.RegisterDataToFile(folderPath, VARS_DATA_PATH, ItemCreatorWindow.variables);
+    }
 
     public static T UpdateData<T>(object data, Type nextType)
     {
@@ -86,7 +96,12 @@ public static class ItemCreator
   
 }
 
+public enum DataTypeEnum
+{
+    Items,
+    Variables
+}
 
 
 
-
+#endif

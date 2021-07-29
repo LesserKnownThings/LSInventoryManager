@@ -18,13 +18,6 @@ public class TemplateSystem
     const string FOREVERY_ASSIGN_LOOP = "FOREVERY Assign";
     const string FOREVERY_ASSIGN_LOOP_END = "ENDFOREVERY Assign";
 
-    const string FOREVERY_CLASS_LOOP = "FOREVERY Class";
-    const string FOREVERY_CLASS_LOOP_END = "ENDFOREVERY Class";
-
-    const string FILL = ">:FILL_PARAM:<";
-
-    const string NONE = "";
-
     private string templateHolder;
 
    
@@ -86,7 +79,7 @@ public class TemplateSystem
     {
         foreach (var data in itemsData)
         {
-            foreach (var varData in data.itemVariables)
+            foreach (var varData in data.variable)
             {
                 if(!totalVariables.ContainsKey(varData.Key))
                 {
@@ -135,73 +128,8 @@ public class TemplateSystem
         return parsedData.ToString();
     }
 
-    private string ReworkFillClass( StringBuilder strcutSb, TemplateItemData data)
-    {
-        StringBuilder parsedData = new StringBuilder();
-        string sbString = strcutSb.ToString();
-        StringBuilder paramSb = new StringBuilder();
-
-        parsedData.Append(sbString.Replace(">:className:<", data.itemName));
-
-        int index = -1;
-
-        foreach (var keyValuePairData in totalVariables)
-        {
-            index++;
-
-            if(data.itemVariables.ContainsKey(keyValuePairData.Key))
-            {
-                KeyValuePair<string, object> currentKeyValuePairData = new KeyValuePair<string, object>(keyValuePairData.Key, data.itemVariables[keyValuePairData.Key]);
-
-                if (index == totalVariables.Count() - 1)
-                {
-                    paramSb.AppendLine(ParseData("[1]", currentKeyValuePairData, NONE));
-                }
-                else 
-                {
-                    paramSb.AppendLine($"{ParseData("[1]", currentKeyValuePairData, NONE)},");
-                }
-            }
-            else
-            {
-                string paramName = keyValuePairData.Key;
-                object obj = keyValuePairData.Value;
-
-                if (index == totalVariables.Count() - 1)
-                {
-                    paramSb.AppendLine(ParseVariable("[1]", paramName, obj));
-                }
-                else
-                {
-                    paramSb.AppendLine($"{ParseVariable("[1]", paramName, obj)},");
-                }                    
-            }
-        }
-
-        string parsedDataStr = parsedData.ToString();
-        parsedDataStr = parsedDataStr.Replace(FILL, paramSb.ToString());        
-
-        return parsedDataStr;
-    }
-
-
-    private string ReworkClassLoopString(StringBuilder strcutSb)
-    {
-        StringBuilder parsedData = new StringBuilder();
-        StringBuilder realSb = new StringBuilder();
-
-        parsedData.Append(strcutSb.ToString().Replace($">:{FOREVERY_CLASS_LOOP_END}:<", ""));
-
-
-        foreach (var data in itemsData)
-        {
-            realSb.AppendLine(ReworkFillClass(parsedData, data));
-        }
-
-        return realSb.ToString();
-    }
-     
-
+   
+   
     private string ParseData(string content, KeyValuePair<string, object> varData, string loopType)
     {
         string dataTrim = content;
@@ -230,39 +158,6 @@ public class TemplateSystem
         return returnData;
     }
 
-    private string ParseVariable(string content, string varName, object varData)
-    {
-        string returnData = string.Empty;
-        string dataTrim = content;
-
-        dataTrim = dataTrim.Replace($">:{FOREVERY_PARAM_LOOP_END}:<", "");
-
-        string[] data = ParseObject(varData, true);
-
-        Type intType = typeof(int);
-            Type floatType = typeof(float);
-            Type boolType = typeof(bool);
-
-            if (varData.GetType().Equals(intType))
-            {
-                returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varName).Replace("[1]", "0");
-            }
-            else if (varData.GetType().Equals(floatType))
-            {
-                returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varName).Replace("[1]", "0f");
-            }
-            else if (varData.GetType().Equals(boolType))
-            {
-                returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varName).Replace("[1]", "false");
-            }
-            else
-            {
-                returnData = dataTrim.Replace("[0]", data[0]).Replace("Name", varName).Replace("[1]", data[1]).Trim('\n');
-            }
-
-        
-        return returnData;
-    }
 
     /// <summary>
     /// Returns an array of 2 strings
@@ -304,25 +199,14 @@ public class TemplateSystem
         dataStr[1] = objDataStr;
         return dataStr;
     }
-
-    /// <summary>
-    /// Maybe will do in later version
-    /// </summary>
-    private void RecordStructTemplate()
-    {
-
-    }
-
 }
 
 public struct TemplateItemData
 {
-    public string itemName;
-    public Dictionary<string, object> itemVariables;
+    public Dictionary<string, object> variable;
 
-    public TemplateItemData(string itemName, Dictionary<string, object> itemVariables)
+    public TemplateItemData(Dictionary<string, object> variable)
     {
-        this.itemName = itemName;
-        this.itemVariables = itemVariables;
+        this.variable = variable;
     }
 }

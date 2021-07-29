@@ -16,7 +16,5 @@ MonoBehaviour:
   itemIcon: {fileID: 21300000, guid: 7befb85f25bbaac4f8497f54ffcc86b7, type: 3}
   isStackable: 0
   stackAmount: 1
-  damage: 15
-  magicDamage: 5
-  armor: 0
-  healthAmount: 0
+  damage: 0
+  magicDamage: 0
