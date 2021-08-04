@@ -1,6 +1,5 @@
 ﻿#if UNITY_EDITOR
 using System.IO;
-using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -10,34 +9,35 @@ using System;
 
 public static class DynamicClassCreator
 {
-    const string DYNAMIC_FOLDER_PATH = "Assets/LesserKnown/Resources/Generated/Dynamic/";
-    const string ITEMS_FOLDER_PATH = "Assets/LesserKnown/Resources/Generated/Items";
+    private const string DYNAMIC_FOLDER_PATH = "Assets/LesserKnown/Resources/Generated/Dynamic/";
+    private const string ITEMS_FOLDER_PATH = "Assets/LesserKnown/Resources/Generated/Items";
 
-    const string TEMPLATE_PATH = "Editor/DynamicClassTemplate";
-    const string PARAM_TEMPLATE_PATH = "Editor/DynamicClassTemplateWithParam";
-    const string generatedClassPath = "DynamicData.cs";
+    private const string CLASS_TEMPLATE_PATH = "Editor/DynamicClassTemplate";
+    private const string ENUM_TEMPLATE_PATH = "Editor/DynamicEnumTemplate";
 
-    const string NAME_VAR = "itemName";
-    const string ICON_VAR = "itemIcon";
+    private const string GENERATED_CLASS_PATH = "DynamicData.cs";
+    private const string GENERATED_ENUM_PATH = "ItemCategoriesEnum.cs";
 
-
-    private static string CreateDynamicClass(string path)
+    private static string CreateDynamicData(string path, bool isClass)
     {
         TextAsset textAsset = Resources.Load<TextAsset>(path);
 
         TemplateSystem template = new TemplateSystem(textAsset.text);
 
-        for (int i = 0; i < ItemCreatorWindow.items.Count; i++)
-            template.AddVariable(PrepareTemplateData());
+        if (isClass)
+        {
+            for (int i = 0; i < ItemCreatorWindow.items.Count; i++)
+            {
+                template.AddVariable(PrepareClassTemplate());
+            }
+        }
 
-        return template.ParseData();
+        return template.ParseData(isClass);
     }
 
-    
-
-    private static TemplateItemData PrepareTemplateData()
-    {
-        
+  
+    private static TemplateItemData PrepareClassTemplate()
+    {        
         Dictionary<string, object> templateDict = new Dictionary<string, object>();
         
         
@@ -55,26 +55,39 @@ public static class DynamicClassCreator
         return templateData;
     }
 
-    public static void Compile()
-    {          
+    
 
-        string data = CreateDynamicClass(TEMPLATE_PATH);
-        
-       FileManager.RegisterClassToFile($"{DYNAMIC_FOLDER_PATH}{generatedClassPath}", data);
+    public static void CompileClass()
+    {
 
-       if (Directory.Exists(ITEMS_FOLDER_PATH))
-       {
-           Directory.Delete(ITEMS_FOLDER_PATH, true);
-           Directory.CreateDirectory(ITEMS_FOLDER_PATH);
-       }
+        string data = CreateDynamicData(CLASS_TEMPLATE_PATH, true);
 
-       for (int i = 0; i < ItemCreatorWindow.items.Count; i++)
-       {
-           CreateScriptableObjects(ItemCreatorWindow.items[i]);
-       }
+        FileManager.RegisterClassToFile($"{DYNAMIC_FOLDER_PATH}{GENERATED_CLASS_PATH}", data);
 
-       AssetDatabase.SaveAssets();
-       AssetDatabase.Refresh();
+        AssetDatabase.Refresh();
+
+        if (Directory.Exists(ITEMS_FOLDER_PATH))
+        {
+            Directory.Delete(ITEMS_FOLDER_PATH, true);
+            Directory.CreateDirectory(ITEMS_FOLDER_PATH);
+        }
+
+        for (int i = 0; i < ItemCreatorWindow.items.Count; i++)
+        {
+            CreateScriptableObjects(ItemCreatorWindow.items[i]);
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+    }
+
+    public static void CompileEnum()
+    {
+        string data = CreateDynamicData(ENUM_TEMPLATE_PATH, false);
+        FileManager.RegisterClassToFile($"{DYNAMIC_FOLDER_PATH}{GENERATED_ENUM_PATH}", data);
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
     }
 
     private static void CreateScriptableObjects(ItemCreatorWindow.CustomItem item)
@@ -89,6 +102,9 @@ public static class DynamicClassCreator
         obj.itemName = item.name;
         obj.isStackable = item.isStackable;
         obj.stackAmount = item.stackAmount;
+        obj.inGameName = item.inGameName;
+        obj.description = item.description;
+        obj.category = item.category;
 
         
         foreach (var field in fields)
@@ -96,13 +112,9 @@ public static class DynamicClassCreator
             int hasIndex = item.addedVariables.FindIndex(x => { return x.varName == field.Name; });
 
             if (hasIndex > -1)
-            {     
-                Type t = item.addedVariables[hasIndex].data.GetType();
-
-                if (field.GetType() != t)
-                {
-                    item.addedVariables[hasIndex].data = Convert.ChangeType(item.addedVariables[hasIndex].data, item.addedVariables[hasIndex].dataType);
-                }
+            {
+                item.addedVariables[hasIndex].data = Convert.ChangeType(item.addedVariables[hasIndex].data, field.FieldType);
+                
                 field.SetValue(obj, item.addedVariables[hasIndex].data);
             }
         }

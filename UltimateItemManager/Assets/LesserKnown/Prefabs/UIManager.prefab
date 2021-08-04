@@ -54,10 +54,21 @@ MonoBehaviour:
     horizontalCellSize: 125
     verticalCellSize: 125
     cellNumber: 20
+    stackTextSize: 20
+    stackCellTopLeftOffset: {x: 50, y: 50}
+    stackCellBottomRightOffset: {x: 8, y: 8}
+    addEventSystem: 1
+    destroyOnThrow: 0
     bgColor: {r: 1, g: 1, b: 1, a: 1}
     slotBgColor: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
+    stackSlotTextColor: {r: 0.9290118, g: 1, b: 0, a: 1}
     slotBgSprite: {fileID: 21300000, guid: 967c7b47090d34cf090c40749e45f0b4, type: 3}
     defaultItemSprite: {fileID: 21300000, guid: 2b4a1682166e4434e8ee7c6f47115b43, type: 3}
     bgSprite: {fileID: 21300000, guid: 935962ddb1e44499dad00e5ca6b38823, type: 3}
     closeButtonSprite: {fileID: 21300000, guid: 3f987439063b59b458caf4a00ec55950, type: 3}
+    stackCellSprite: {fileID: 21300000, guid: 967c7b47090d34cf090c40749e45f0b4, type: 3}
+    cellOptionsSprite: {fileID: 21300000, guid: 935962ddb1e44499dad00e5ca6b38823, type: 3}
+    cellOptionsButtonsSprite: {fileID: 21300000, guid: 935962ddb1e44499dad00e5ca6b38823, type: 3}
+    destroyWindowButtonsSprite: {fileID: 21300000, guid: 935962ddb1e44499dad00e5ca6b38823, type: 3}
+    destroyWindowBGSprite: {fileID: 21300000, guid: 935962ddb1e44499dad00e5ca6b38823, type: 3}
     uiOpenInput: 105

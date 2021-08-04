@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using System.Globalization;
-using System.Reflection;
 
 public class TemplateSystem
 {
@@ -24,7 +19,7 @@ public class TemplateSystem
 
 
     private List<TemplateItemData> itemsData = new List<TemplateItemData>();
-    Dictionary<string, object> totalVariables = new Dictionary<string, object>();
+    private Dictionary<string, object> totalVariables = new Dictionary<string, object>();
     
 
     public TemplateSystem(string template)
@@ -37,9 +32,12 @@ public class TemplateSystem
         itemsData.Add(templateItemData);
     }
 
-    public string ParseData()
+    public string ParseData(bool isClass)
     {
-        SetTotalVariables();
+        if (isClass)
+        {
+            SetTotalVariables();
+        }
 
         List<string> lines = new List<string>(templateHolder.Split('\n'));
 
@@ -56,7 +54,15 @@ public class TemplateSystem
                 {
                     if (lines[i].Contains(FOREVERY_LOOP_END))
                     {
-                        realSb.AppendLine(ReworkLoopString(FOREVERY_LOOP, strcutSb, false));
+                        if (isClass)
+                        {
+                            realSb.AppendLine(ReworkLoopString(FOREVERY_LOOP, strcutSb, false));
+                        }
+                        else
+                        {
+                            realSb.AppendLine(ReworkEnumLoopString(FOREVERY_LOOP, strcutSb));
+                        }
+
                         strcutSb.Clear();
                         break;
                     }
@@ -128,6 +134,34 @@ public class TemplateSystem
         return parsedData.ToString();
     }
 
+    private string ReworkEnumLoopString(string loopType, StringBuilder strcutSb)
+    {
+        StringBuilder parsedData = new StringBuilder();
+
+        for (int i = 0; i < ItemCreatorWindow.categories.Count; i++)
+        {         
+
+            if (i < ItemCreatorWindow.categories.Count - 1 && i != 0)
+            {
+                parsedData.AppendLine($"{ItemCreatorWindow.categories[i].data}={i},");
+            }
+            else
+            {
+                if (i == 0 && ItemCreatorWindow.categories.Count > 1)
+                {
+                    parsedData.AppendLine($"{ItemCreatorWindow.categories[i].data}={i},");
+                }
+                else
+                {
+                    parsedData.AppendLine($"{ItemCreatorWindow.categories[i].data}={i}");
+                }
+            }
+        }
+
+        string returnData = parsedData.ToString().Replace(FOREVERY_LOOP_END, "");
+
+        return returnData;
+    }
    
    
     private string ParseData(string content, KeyValuePair<string, object> varData, string loopType)

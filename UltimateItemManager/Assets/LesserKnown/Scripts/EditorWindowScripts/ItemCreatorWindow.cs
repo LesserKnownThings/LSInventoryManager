@@ -26,6 +26,7 @@ public enum WindowTypeEnum
 public class ItemCreatorWindow : EditorWindow
 {
     public GUISkin menuItemsGUISettings;
+    public GUISkin itemsWindowSkin;
     public Texture2D deleteItemButton;
     public Texture2D addStatButton;
     public Texture2D removeStatButton;
@@ -35,6 +36,8 @@ public class ItemCreatorWindow : EditorWindow
     private const string OVERRIDE_TOOLTIP = "Toggle this if you want to override the data of the variable";
     private const string ABOUT_TEXT = "Create by Lesser Known Things\n\nYou can use this asset as you please no credit necessary.\n\nYou can use this as you please, the asset is completely free.";
     private const string REPO_PATH = "https://github.com/LesserKnownThings/LSInventoryManager";
+
+    private const string IN_GAME_NAME_TOOLTIP = "The name that will be used to display the item name in game";
 
     #region Size Variables
     private const float BOTTOM_BUTTONS_SIZE = 35f;
@@ -52,22 +55,41 @@ public class ItemCreatorWindow : EditorWindow
     private Dictionary<object, string> allowedRefs;
     public static List<CustomItem> items = new List<CustomItem>();
     public static List<ItemVariables> variables = new List<ItemVariables>();
-    public static bool cannotCompile = false;
+    public static List<Category> categories = new List<Category>();
 
-    private List<bool> hiddenItems = new List<bool>();
+    /// <summary>
+    /// Item same name
+    /// Item name violation
+    /// Variable same name
+    /// Variable name violation
+    /// </summary>
+    private static bool[] violationsStatus = new bool[] { false, false, false, false };
+    public static bool cannotCompile
+    { 
+        get 
+        { 
+            foreach (var violation in violationsStatus)
+            {
+                if (violation)
+                {
+                    return true;
+                }
+            }
+            return false;
+        } 
+    }
+
+    private bool cannotCompileEnum;
+    
+
     private string[] refsNames;
     private Vector2 scrollPos;
 
-    private Regex reg = new Regex(@"^([_]?[a-zA-Z])+([_]?[0-9]*[a-zA-Z]*[_]?)*$");
-    private MatchCollection matches;
-
-    private WindowTypeEnum selectedWindowType = WindowTypeEnum.Items;
+    private Regex itemNameViolationRegex = new Regex(@"^([_]?[a-zA-Z])+([_]?[0-9]*[a-zA-Z]*[_]?)*$");
+    private Regex variableNameViolationRegex = new Regex(@"(?:[\s]|^)(description|isStackable|stackAmount|itemIcon|itemName|inGameName|category)(?=[\s]|$)");
 
     private int toolbarInt = 0;
-    private string[] menuToolbarValues = {"Items", "Variables", "Market", "Crafting", "Categories", "About" };
-
-    private List<int> variablesIndex = new List<int>();
-    private List<string> variableNames = new List<string>();
+    private string[] menuToolbarValues = {"Items", "Variables", "Categories", "Market", "Crafting", "About" };
 
     public void Initialize()
     {
@@ -111,10 +133,11 @@ public class ItemCreatorWindow : EditorWindow
             items = new List<CustomItem>();
         }
 
+        categories = ItemCreator.GetData<List<Category>>(DataTypeEnum.Categories);
 
-        for (int i = 0; i < items.Count; i++)
+        if(categories == null)
         {
-            instance.hiddenItems.Add(false);
+            categories = new List<Category>();
         }
 
     }
@@ -142,6 +165,16 @@ public class ItemCreatorWindow : EditorWindow
                 AddVariable(variable);
             }
         }
+
+        List<Category> virtualCategories = ItemCreator.GetData<List<Category>>(DataTypeEnum.Categories);
+
+        if (virtualCategories != null)
+        {
+            foreach (var category in virtualCategories)
+            {
+                AddCategory(category);
+            }
+        }
     }  
 
     void OnGUI()
@@ -150,7 +183,6 @@ public class ItemCreatorWindow : EditorWindow
 
         ///ITEMS AND SUB-MENUS
         EditorGUILayout.BeginHorizontal();
-
         EditorGUILayout.BeginVertical("box");
         DrawMenuButtons();
         EditorGUILayout.EndVertical();
@@ -164,22 +196,164 @@ public class ItemCreatorWindow : EditorWindow
             case 1:
                 DrawVariables();
                 break;
+            case 2:
+                DrawCategories();
+                break;
             case 5:
                 DrawAboutPage();
-                break;
+                break;            
             default:
                 DrawInProgress();
                 break;
         }
 
+        
+
         EditorGUILayout.EndVertical();
-
-
-        GUILayout.FlexibleSpace();
         EditorGUILayout.EndHorizontal();       
     }
 
-   
+    private void DrawCategories()
+    {
+        EditorGUILayout.BeginHorizontal();
+        GUI.backgroundColor = Color.blue;
+        if (GUILayout.Button("Compile & Save Enum", GUILayout.MaxWidth(150f), GUILayout.MinHeight(30f)))
+        {
+            SaveData();
+            CompileEnumData();
+        }
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
+        DrawAddCategory();
+        DrawRemoveCategory(true, -1);
+        EditorGUILayout.EndHorizontal();
+        
+        for (int i = 0; i < categories.Count; i++)
+        {
+            EditorGUILayout.BeginHorizontal();
+            if (i > 0)
+            {
+                categories[i].data = EditorGUILayout.TextField(categories[i].data);
+            }
+            else
+            {
+                EditorGUILayout.LabelField(categories[i].data);
+            }
+            
+
+            if (HasNameViolation(categories[i].data, false) || HasSameName(i, DataTypeEnum.Categories))
+            {
+                cannotCompileEnum = true;
+                EditorGUILayout.HelpBox("Name Violation!", MessageType.Error);
+            }
+            else
+            {
+                cannotCompileEnum = false;
+            }
+
+            if (i > 0)
+            {
+                DrawRemoveCategory(false, i);
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+    }
+
+    private void DrawAddCategory()
+    {
+        EditorGUILayout.BeginHorizontal();
+        GUI.backgroundColor = Color.yellow;
+
+        if (addStatButton != null)
+        {
+            if (GUILayout.Button(addStatButton, GUILayout.Width(ICON_BUTTON_SIZE), GUILayout.Height(ICON_BUTTON_SIZE)))
+            {
+                AddCategory();
+            }
+        }
+        else
+        {
+            if (GUILayout.Button("Add Stat", GUILayout.MaxWidth(BUTTONS_SIZE)))
+            {
+                AddCategory();
+            }
+        }
+
+
+        EditorGUILayout.EndHorizontal();
+
+        GUI.backgroundColor = Color.white;
+    }
+
+    private void DrawRemoveCategory(bool isLast, int index)
+    {
+        EditorGUILayout.BeginHorizontal();
+        GUI.backgroundColor = Color.red;
+
+        if (addStatButton != null)
+        {
+            if (GUILayout.Button(removeStatButton, GUILayout.Width(ICON_BUTTON_SIZE), GUILayout.Height(ICON_BUTTON_SIZE)))
+            {
+                if(isLast)
+                {
+                    RemoveCategory();
+                }
+                else
+                {
+                    RemoveCateogryAt(index);
+                }
+            }
+        }
+        else
+        {
+            if (GUILayout.Button("Remove", GUILayout.MaxWidth(BUTTONS_SIZE)))
+            {
+                if (isLast)
+                {
+                    RemoveCategory();
+                }
+                else
+                {
+                    RemoveCateogryAt(index);
+                }
+            }
+        }
+
+
+        EditorGUILayout.EndHorizontal();
+
+        GUI.backgroundColor = Color.white;
+    }
+
+    private void AddCategory()
+    {
+        Category category = new Category(GUID.Generate().ToString(), $"Category{categories.Count}");
+        categories.Add(category);
+        SaveData();
+    }
+
+    private void AddCategory(Category category)
+    {
+        categories.Add(category);
+    }
+
+    private void RemoveCategory()
+    {
+        if(categories.Count == 1)
+        {
+            Debug.LogWarning("Not allowed to delete default");
+            return;
+        }
+        categories.RemoveAt(categories.Count - 1);
+        SaveData();
+    }
+
+    private void RemoveCateogryAt(int index)
+    {
+        categories.RemoveAt(index);
+        SaveData();
+    }
 
     private void DrawInProgress()
     {
@@ -231,6 +405,7 @@ public class ItemCreatorWindow : EditorWindow
         {
             CompileData();
         }
+
         GUI.backgroundColor = Color.white;
         GUI.contentColor = Color.white;        
         EditorGUILayout.EndHorizontal();
@@ -259,17 +434,31 @@ public class ItemCreatorWindow : EditorWindow
         GUI.skin = null;
     }
 
-    private bool HasNameViolation(string data)
+    private bool HasNameViolation(string data, bool isVariable)
     {
         bool notNameViolation = false;
+         
 
-        notNameViolation = reg.IsMatch(data);
+        notNameViolation = itemNameViolationRegex.IsMatch(data);
+
+        if(isVariable)
+        {
+            bool hasVariableName = false;
+            hasVariableName = variableNameViolationRegex.IsMatch(data);
+
+            return !notNameViolation || hasVariableName;
+        }
 
         return !notNameViolation;
     }
 
     private void DrawItems()
     {
+
+        if(itemsWindowSkin != null)
+        {
+            GUI.skin = itemsWindowSkin;
+        }
 
         scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
 
@@ -278,39 +467,42 @@ public class ItemCreatorWindow : EditorWindow
             EditorGUILayout.BeginVertical("box");
 
 
-            hiddenItems[i] = EditorGUILayout.Foldout(hiddenItems[i], items[i].name);
+            items[i].displayHidden = EditorGUILayout.Foldout(items[i].displayHidden, items[i].name);
 
             
-
-            List<int> inUseNames = new List<int>();
-
             if (HasSameName(i, DataTypeEnum.Items))
             {
                 EditorGUILayout.HelpBox("Name in use!", MessageType.Error);
-                cannotCompile = true;
+                violationsStatus[0] = true;
             }
             else
             {
-                cannotCompile = false;
+                violationsStatus[0] = false;
             }
 
-            if (HasNameViolation(items[i].name))
+            if (HasNameViolation(items[i].name, false))
             {
                 EditorGUILayout.HelpBox("Naming violation", MessageType.Error);
-                cannotCompile = true;
+                violationsStatus[1] = true;
             }
             else
             {
-                cannotCompile = false;
+                violationsStatus[1] = false;
             }
 
             //Draw items only when they're toggled
-            if (!hiddenItems[i])
+            if (!items[i].displayHidden)
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.BeginVertical();
                 EditorGUILayout.LabelField("Name", EditorStyles.boldLabel, GUILayout.ExpandWidth(false));
                 items[i].name = EditorGUILayout.TextField(items[i].name, GUILayout.ExpandWidth(false));
+                GUI.color = Color.yellow;
+                EditorGUILayout.LabelField(new GUIContent("In Game Name", IN_GAME_NAME_TOOLTIP), EditorStyles.boldLabel, GUILayout.ExpandWidth(false));
+                items[i].inGameName = EditorGUILayout.TextField(items[i].inGameName, GUILayout.ExpandWidth(false));
+                GUI.color = Color.white;
+
+                items[i].category = (ItemCategoriesEnum)EditorGUILayout.EnumPopup("Category", items[i].category);
 
                 EditorGUILayout.Space(10);
 
@@ -325,15 +517,37 @@ public class ItemCreatorWindow : EditorWindow
                     items[i].stackAmount = 1;
                 }
 
+                
+                
+
                 EditorGUILayout.Space(10);
                 EditorGUILayout.EndVertical();
 
+                
+
                 ///Draw Icon select
                 DrawIconSelection(i);
+                if (itemsWindowSkin != null)
+                {
+                    GUI.skin = itemsWindowSkin;
+                }
 
-
-                GUILayout.FlexibleSpace();
                 EditorGUILayout.EndHorizontal();
+
+                items[i].showDescription = EditorGUILayout.Foldout(items[i].showDescription, "Description");
+
+                if (items[i].showDescription)
+                {
+                    EditorStyles.textArea.wordWrap = true;
+
+                    Vector2 currentScrollView = new Vector2(items[i].textScrollX, items[i].textScrollY);
+                    currentScrollView = EditorGUILayout.BeginScrollView(currentScrollView, GUILayout.Height(150));
+                    items[i].textScrollX = currentScrollView.x;
+                    items[i].textScrollY = currentScrollView.y;
+
+                    items[i].description = EditorGUILayout.TextArea(items[i].description, EditorStyles.textArea, GUILayout.ExpandHeight(true));
+                    EditorGUILayout.EndScrollView();
+                }
 
                 GUI.color = Color.yellow;
                 EditorGUILayout.LabelField("Stats", EditorStyles.boldLabel);
@@ -353,7 +567,11 @@ public class ItemCreatorWindow : EditorWindow
 
 
         DrawItemButtons(); //Saving data and Adding new items
+
+        GUI.skin = null;
     }
+
+  
 
     #region Item Variables
     private void DrawItemVariables(int index)
@@ -372,17 +590,19 @@ public class ItemCreatorWindow : EditorWindow
             currentItem.overrideData = EditorGUILayout.Toggle(new GUIContent("Override Data", OVERRIDE_TOOLTIP), currentItem.overrideData, GUILayout.ExpandWidth(false));
             EditorGUILayout.LabelField("Value", EditorStyles.boldLabel, GUILayout.Width(75));
 
+            int sameIndex = variables.FindIndex(x => { return x.uid == currentItem.uid || x.varName == currentItem.varName; });
+
             ///Draw all types variable types
             switch (currentItem.index)
             {
                 case 0:     
                     if (currentItem.overrideData)
                     {
-                        int intData = ItemCreator.UpdateData<int>(itemVariables[i].data, typeof(int));
+                        int intData = ItemCreator.UpdateData<int>(itemVariables[i].data, itemVariables[i].dataType, typeof(int));
                         currentItem.data = EditorGUILayout.IntField(intData, GUILayout.ExpandWidth(false));
                     }
                     else
-                    {
+                    {                        
                         EditorGUILayout.LabelField(currentItem.data.ToString(), GUILayout.ExpandWidth(false));
                     }
 
@@ -392,7 +612,7 @@ public class ItemCreatorWindow : EditorWindow
                 case 1:      
                     if (currentItem.overrideData)
                     {
-                        float floatData = ItemCreator.UpdateData<float>(currentItem.data, typeof(float));
+                        float floatData = ItemCreator.UpdateData<float>(currentItem.data, itemVariables[i].dataType, typeof(float));
                         currentItem.data = EditorGUILayout.FloatField(floatData, GUILayout.ExpandWidth(false));
                     }
                     else
@@ -404,7 +624,7 @@ public class ItemCreatorWindow : EditorWindow
                     break;
 
                 case 2:
-                    string stringData = ItemCreator.UpdateData<string>(currentItem.data, typeof(string));
+                    string stringData = ItemCreator.UpdateData<string>(currentItem.data, itemVariables[i].dataType, typeof(string));
 
                     string dataString = stringData;
 
@@ -434,7 +654,7 @@ public class ItemCreatorWindow : EditorWindow
 
                     if (currentItem.overrideData)
                     {
-                        bool booldata = ItemCreator.UpdateData<bool>(currentItem.data, typeof(bool));
+                        bool booldata = ItemCreator.UpdateData<bool>(currentItem.data, itemVariables[i].dataType, typeof(bool));
                         currentItem.data = EditorGUILayout.Toggle(booldata, GUILayout.ExpandWidth(false));
                     }
                     else
@@ -445,6 +665,11 @@ public class ItemCreatorWindow : EditorWindow
                     currentItem.dataType = typeof(bool);
                     break;
 
+            }
+
+            if (!currentItem.overrideData)
+            {
+                currentItem.data = variables[sameIndex].data;
             }
 
             itemVariables[i] = currentItem;            
@@ -463,22 +688,29 @@ public class ItemCreatorWindow : EditorWindow
         EditorGUILayout.BeginHorizontal();
         GUI.backgroundColor = Color.yellow;
 
-        if(addStatButton != null)
+        if (!cannotCompile)
         {
-            if (GUILayout.Button(addStatButton, GUILayout.Width(ICON_BUTTON_SIZE), GUILayout.Height(ICON_BUTTON_SIZE)))
+
+
+            if (addStatButton != null)
             {
-                AddItemVariable(index);
+                if (GUILayout.Button(addStatButton, GUILayout.Width(ICON_BUTTON_SIZE), GUILayout.Height(ICON_BUTTON_SIZE)))
+                {
+                    AddItemVariable(index);
+                }
             }
-        }
-        else
-        {
-            if (GUILayout.Button("Add Variable"))
+            else
             {
-                AddItemVariable(index);
+                if (GUILayout.Button("Add Variable"))
+                {
+                    AddItemVariable(index);
+                }
             }
+
+            DrawDeleteItemStatButton(index, -1, true);
+
         }
 
-        DrawDeleteItemStatButton(index, -1, true);       
 
         EditorGUILayout.EndHorizontal();
     }
@@ -536,7 +768,6 @@ public class ItemCreatorWindow : EditorWindow
 
         items[index].addedVariables.RemoveAt(items[index].addedVariables.Count - 1);
 
-        cannotCompile = false;
         SaveData();
     }
 
@@ -544,7 +775,6 @@ public class ItemCreatorWindow : EditorWindow
     {
         items[index].addedVariables.RemoveAt(varIndex);
 
-        cannotCompile = false;
         SaveData();
     }
 
@@ -574,9 +804,7 @@ public class ItemCreatorWindow : EditorWindow
 
     private void DeleteItemCleanup(int index)
     {
-        hiddenItems.RemoveAt(index);
         items.RemoveAt(index);
-        cannotCompile = false;
         SaveData();
     }
 
@@ -586,9 +814,10 @@ public class ItemCreatorWindow : EditorWindow
     /// <param name="index"></param>
     private void DrawIconSelection(int index)
     {
+        GUI.skin = null;
         Sprite currentSprite = ItemCreator.GetItemIcon(items[index].itemIconDirectory);
 
-        currentSprite = (Sprite)EditorGUILayout.ObjectField("Item Icon",currentSprite, typeof(Sprite), false, GUILayout.ExpandWidth(false));
+        currentSprite = (Sprite)EditorGUILayout.ObjectField("Item Icon",currentSprite, typeof(Sprite), false);
 
         if(!AssetDatabase.GetAssetPath(currentSprite).Equals(items[index].itemIconDirectory))
         {
@@ -642,25 +871,26 @@ public class ItemCreatorWindow : EditorWindow
             EditorGUILayout.LabelField("Stat Name", GUILayout.MaxWidth(75f));
             variables[i].varName = EditorGUILayout.TextField(variables[i].varName, GUILayout.ExpandWidth(false));
 
-            EditorGUILayout.LabelField("Value", GUILayout.MaxWidth(40f));   
+            EditorGUILayout.LabelField("Value", GUILayout.MaxWidth(40f));
 
             ///Draw all types variable types
+            
             switch (variables[i].index)
             {
                 case 0:
-                    int intData = ItemCreator.UpdateData<int>(variables[i].data, typeof(int));
+                    int intData = ItemCreator.UpdateData<int>(variables[i].data, variables[i].dataType, typeof(int));
                     variables[i].data = EditorGUILayout.IntField(intData);
                     variables[i].dataType = typeof(int);
                     break;
 
                 case 1:
-                    float floatData = ItemCreator.UpdateData<float>(variables[i].data, typeof(float));
+                    float floatData = ItemCreator.UpdateData<float>(variables[i].data, variables[i].dataType, typeof(float));
                     variables[i].data = EditorGUILayout.FloatField(floatData);
                     variables[i].dataType = typeof(float);
                     break;
 
                 case 2:
-                    string stringData = ItemCreator.UpdateData<string>(variables[i].data, typeof(string));
+                    string stringData = ItemCreator.UpdateData<string>(variables[i].data, variables[i].dataType, typeof(string));
 
                     string dataString = stringData;
 
@@ -678,33 +908,34 @@ public class ItemCreatorWindow : EditorWindow
                     break;
 
                 case 3:
-                    bool booldata = ItemCreator.UpdateData<bool>(variables[i].data, typeof(bool));
+                    bool booldata = ItemCreator.UpdateData<bool>(variables[i].data, variables[i].dataType, typeof(bool));
                     variables[i].data = EditorGUILayout.Toggle(booldata);
                     variables[i].dataType = typeof(bool);
                     break;                   
 
             }
             
+
             variables[i].index = EditorGUILayout.Popup(variables[i].index, refsNames);            
 
             if (HasSameName(i, DataTypeEnum.Variables))
             {
                 EditorGUILayout.HelpBox("Name in use!", MessageType.Error);
-                cannotCompile = true;
+                violationsStatus[2] = true;
             }
             else
             {
-                cannotCompile = false;
+                violationsStatus[2] = false;
             }
 
-            if (HasNameViolation(variables[i].varName))
+            if (HasNameViolation(variables[i].varName, true))
             {
                 EditorGUILayout.HelpBox("Naming violation", MessageType.Error);
-                cannotCompile = true;
+                violationsStatus[3] = true;
             }
             else
             {
-                cannotCompile = false;
+                violationsStatus[3] = false;
             }
 
             DrawRemoveStat(i, false);
@@ -772,7 +1003,6 @@ public class ItemCreatorWindow : EditorWindow
         currentItem.itemIconDirectory = "";
         currentItem.uid = Guid.NewGuid().ToString();
         items.Add(currentItem);
-        hiddenItems.Add(true);
 
         SaveData();
     }
@@ -780,7 +1010,6 @@ public class ItemCreatorWindow : EditorWindow
     private void AddItem(CustomItem item)
     {
         items.Add(item);
-        hiddenItems.Add(true);
     }
 
     private void AddVariable()
@@ -790,8 +1019,6 @@ public class ItemCreatorWindow : EditorWindow
         itemVariable.dataType = typeof(int);
         itemVariable.data = 0;
         itemVariable.uid = Guid.NewGuid().ToString();
-        variablesIndex.Add(variables.Count);
-        variableNames.Add(itemVariable.varName);
         variables.Add(itemVariable);        
         SaveData();
     }
@@ -799,8 +1026,6 @@ public class ItemCreatorWindow : EditorWindow
     private void AddVariable(ItemVariables variable)
     {
         variables.Add(variable);
-        variablesIndex.Add(variablesIndex.Count);
-        variableNames.Add(variable.varName);
     }
 
     private void RemoveVariable(int index, bool lastVar)
@@ -847,7 +1072,6 @@ public class ItemCreatorWindow : EditorWindow
             variables.RemoveAt(index);
         }        
 
-        cannotCompile = false;
         SaveData();
     }
 
@@ -862,6 +1086,9 @@ public class ItemCreatorWindow : EditorWindow
         else if (dataType == DataTypeEnum.Variables)
         {
             sameNameIndex = variables.FindIndex(x => { return x.uid != variables[index].uid && x.varName == variables[index].varName; });
+        }else if(dataType == DataTypeEnum.Categories)
+        {
+            sameNameIndex = categories.FindIndex(x => { return x.uid != categories[index].uid && x.data.Equals(categories[index].data); });
         }
 
 
@@ -870,12 +1097,13 @@ public class ItemCreatorWindow : EditorWindow
 
     public void SaveVariableChnage()
     {
-        cannotCompile = false;
         SaveData();
     }
 
     private void SaveData()
     {
+        violationsStatus = new bool[] { false, false, false, false };
+
         if (cannotCompile)
         {
             Debug.LogError("Cannot save data, you must fix all errors before saving");
@@ -883,6 +1111,7 @@ public class ItemCreatorWindow : EditorWindow
         }
         ItemCreator.SaveItemData();
         ItemCreator.SaveVarData();
+        ItemCreator.SaveCategoryData();
     }
 
     private void CompileData()
@@ -892,8 +1121,21 @@ public class ItemCreatorWindow : EditorWindow
             Debug.LogError("Cannot compile, you must fix all errors before compiling");
             return;
         }
-        DynamicClassCreator.Compile();
+
+        DynamicClassCreator.CompileClass();
     }
+
+    private void CompileEnumData()
+    {
+        if (cannotCompileEnum)
+        {
+            Debug.LogError("Cannot compile the current enum, you must fix all errors before compiling");
+            return;
+        }
+
+        DynamicClassCreator.CompileEnum();
+    }
+
     #endregion
 
     #region Internal Classes  
@@ -911,6 +1153,19 @@ public class ItemCreatorWindow : EditorWindow
         public T GetData<T>()
         {
             return (T)data;
+        }
+    }
+
+    [System.Serializable]
+    public class Category
+    {
+        public string uid;
+        public string data;
+
+        public Category(string uid, string data)
+        {
+            this.uid = uid;
+            this.data = data;
         }
     }
 
@@ -937,7 +1192,21 @@ public class ItemCreatorWindow : EditorWindow
         [HideInInspector]
         public int stackAmount;
         [HideInInspector]
+        public string description = "";
+        [HideInInspector]
+        public string inGameName = "";
+        [HideInInspector]
+        public ItemCategoriesEnum category;
+        [HideInInspector]
         public List<ItemVariables> addedVariables = new List<ItemVariables>();
+
+        [HideInInspector]
+        public float textScrollX = 0f;
+        public float textScrollY = 0f;
+        [HideInInspector]
+        public bool showDescription;
+        [HideInInspector]
+        public bool displayHidden;
     }
 
     [System.Serializable]

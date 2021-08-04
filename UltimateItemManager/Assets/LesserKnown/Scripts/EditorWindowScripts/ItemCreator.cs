@@ -12,7 +12,7 @@ public static class ItemCreator
     const string scriptableObjectsFolder = "Assets/Resources/Items";
     const string ITEMS_DATA_PATH = "items.text";
     const string VARS_DATA_PATH = "variables.text";
-
+    const string CATEGORIES_DATA_PATH = "categories.text";
 
 
     public static T  GetData<T>(DataTypeEnum dataType)
@@ -24,6 +24,9 @@ public static class ItemCreator
         }else if (dataType == DataTypeEnum.Variables)
         {
             data = FileManager.GetData<T>(folderPath, VARS_DATA_PATH);
+        }else if(dataType == DataTypeEnum.Categories)
+        {
+            data = FileManager.GetData<T>(folderPath, CATEGORIES_DATA_PATH);
         }
 
         return data;
@@ -43,14 +46,21 @@ public static class ItemCreator
         FileManager.RegisterDataToFile(folderPath, VARS_DATA_PATH, ItemCreatorWindow.variables);
     }
 
-    public static T UpdateData<T>(object data, Type nextType)
+    public static void SaveCategoryData()
+    {
+        FileManager.RegisterDataToFile(folderPath, CATEGORIES_DATA_PATH, ItemCreatorWindow.categories);
+    }
+
+    public static T UpdateData<T>(object data, Type currentType, Type nextType)
     {
         object emptyData = Convert.ChangeType(0, nextType);
 
-        bool differentData = nextType != data.GetType();
+        bool differentData = currentType != nextType;
 
         if (differentData)
-            return (T)emptyData;               
+            return (T)emptyData;
+
+        data = Convert.ChangeType(data, nextType);
 
         return (T)data;
     }
@@ -99,7 +109,8 @@ public static class ItemCreator
 public enum DataTypeEnum
 {
     Items,
-    Variables
+    Variables,
+    Categories
 }
 
 

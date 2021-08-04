@@ -16,13 +16,27 @@ public class Settings
     public float verticalCellSize = 0f;
     public int cellNumber = 0;
 
+    public float stackTextSize = 0f;
+    public Vector2 stackCellTopLeftOffset = Vector2.zero;
+    public Vector2 stackCellBottomRightOffset = Vector2.zero;
+
+    public bool addEventSystem = true;
+    public bool destroyOnThrow = false;
+
     public Color bgColor;
     public Color slotBgColor;
+    public Color stackSlotTextColor;
 
     public Sprite slotBgSprite;
     public Sprite defaultItemSprite;
     public Sprite bgSprite;
     public Sprite closeButtonSprite;
+    public Sprite stackCellSprite;
+
+    public Sprite cellOptionsSprite;
+    public Sprite cellOptionsButtonsSprite;
+    public Sprite destroyWindowButtonsSprite;
+    public Sprite destroyWindowBGSprite;
 
     public KeyCode uiOpenInput;
 
@@ -39,12 +53,12 @@ public class Settings
         int multiplier = 1;
         int cellMult = 0;
 
-        if(cellNumber > 10)
+        if (cellNumber > 10)
         {
             multiplier = cellNumber / 10;
         }
 
-        switch(multiplier)
+        switch (multiplier)
         {
             case 1:
                 cellMult = 4;
@@ -76,8 +90,21 @@ public class Settings
         verticalCellSize = 0f;
         cellNumber = 0;
 
+        stackTextSize = 0f;
+        stackCellTopLeftOffset = Vector2.zero;
+        stackCellBottomRightOffset = Vector2.zero;
+
+        addEventSystem = true;
+
         bgColor = new Color();
         slotBgColor = new Color();
+        stackSlotTextColor = new Color();
 
+        slotBgSprite = null;
+        defaultItemSprite = null;
+        bgSprite = null;
+        closeButtonSprite = null;
+        stackCellSprite = null;
+        cellOptionsSprite = null;
     }
 }

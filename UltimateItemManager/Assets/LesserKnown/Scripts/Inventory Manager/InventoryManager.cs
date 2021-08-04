@@ -16,6 +16,8 @@ public class InventoryManager : MonoBehaviour
     public Settings settings = new Settings();
     #endregion
 
+    public bool alphaReworkUI;
+
     public static List<DynamicData> items = new List<DynamicData>();
 
     private InGameInventoryManager inGameInvManager;
